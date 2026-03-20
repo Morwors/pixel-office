@@ -2,1139 +2,895 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#1a1a2e">
+<meta name="theme-color" content="#16161a">
 <title>Aleksa's AI Office</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #1a1a2e;
-  --bg2: #1e1e32;
-  --surface: #2a2a44;
-  --border: #4a3a5e;
-  --border-hi: #8a7aae;
-  --text: #e0e0e0;
-  --text-dim: #8080a0;
-  --text-dimmer: #6060a0;
-  --accent: #f0c040;
-  --accent2: #c0a020;
-  --green: #40c040;
-  --red: #e04040;
-  --blue: #4080e8;
-  --bar-h: 44px;
-  --safe-b: env(safe-area-inset-bottom, 0px);
-  --font: 'Press Start 2P', monospace;
+:root{
+  --bg:#16161a;--sf:#242629;--sf2:#2e3035;--brd:#3a3d44;
+  --tx:#fffffe;--dim:#94a1b2;--dim2:#72778a;
+  --acc:#7f5af0;--acc2:#2cb67d;--warn:#ff8906;--err:#e53170;
+  --bar:48px;--font:'Press Start 2P',monospace;
+  --safe-b:env(safe-area-inset-bottom,0px);
 }
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);font-family:var(--font);color:var(--tx);overflow:hidden;height:100dvh;width:100vw;user-select:none;-webkit-user-select:none;touch-action:manipulation;position:fixed;top:0;left:0}
 
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+/* TOP BAR */
+#topBar{position:fixed;top:0;left:0;right:0;height:var(--bar);background:rgba(22,22,26,0.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:100}
+#topBar .logo{color:var(--acc);font-size:clamp(7px,2vw,10px);display:flex;align-items:center;gap:6px}
+#topBar .logo span{color:var(--dim)}
+#topBar .info{color:var(--dim2);font-size:clamp(6px,1.4vw,8px);display:flex;gap:10px;align-items:center}
 
-body {
-  background: var(--bg);
-  font-family: var(--font);
-  color: var(--text);
-  overflow: hidden;
-  height: 100dvh;
-  width: 100vw;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-  position: fixed;
-  top: 0; left: 0;
-}
+/* CANVAS */
+#gameCanvas{position:fixed;top:var(--bar);left:0;right:0;bottom:var(--bar);image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;touch-action:none}
 
-/* ── TOP BAR ── */
-#topBar {
-  position: fixed; top: 0; left: 0; right: 0;
-  height: var(--bar-h);
-  background: linear-gradient(180deg, #2a1a3e, var(--bg));
-  border-bottom: 2px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 12px; z-index: 100;
-}
-#topBar .office-name {
-  color: var(--accent);
-  font-size: clamp(7px, 2vw, 11px);
-  text-shadow: 1px 1px 0 #000;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-#topBar .info {
-  color: var(--text-dim);
-  font-size: clamp(6px, 1.5vw, 8px);
-  display: flex; gap: 8px; align-items: center;
-  flex-shrink: 0;
-}
+/* BOTTOM NAV */
+#bottomNav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--bar) + var(--safe-b));padding-bottom:var(--safe-b);background:rgba(22,22,26,0.95);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:1px solid var(--brd);display:flex;align-items:center;justify-content:space-around;z-index:100}
+.nav-btn{font-family:var(--font);font-size:clamp(6px,1.5vw,8px);color:var(--dim);background:none;border:none;cursor:pointer;padding:6px 12px;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .2s}
+.nav-btn:active,.nav-btn.active{color:var(--acc)}
+.nav-btn .ico{font-size:16px}
 
-/* ── CANVAS ── */
-#gameCanvas {
-  position: fixed;
-  top: var(--bar-h);
-  left: 0; right: 0;
-  bottom: var(--bar-h);
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  cursor: pointer;
-  touch-action: none;
-}
+/* STATUS BAR */
+#statusBar{position:fixed;bottom:calc(var(--bar) + var(--safe-b) + 8px);left:50%;transform:translateX(-50%);display:flex;gap:3px;background:rgba(36,38,41,0.92);border:1px solid var(--brd);border-radius:20px;padding:4px 10px;z-index:90;max-width:95vw;overflow-x:auto;scrollbar-width:none}
+#statusBar::-webkit-scrollbar{display:none}
+.sdot{display:flex;align-items:center;gap:3px;font-size:clamp(5px,1.1vw,6px);color:var(--dim);white-space:nowrap;padding:3px 6px;cursor:pointer;border-radius:10px;transition:background .15s}
+.sdot:active{background:var(--sf2)}
+.sdot .d{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.d-w{background:var(--acc2);box-shadow:0 0 6px var(--acc2)}
+.d-i{background:var(--warn);box-shadow:0 0 4px rgba(255,137,6,.5)}
+.d-b{background:var(--acc);box-shadow:0 0 4px rgba(127,90,240,.5)}
+.d-o{background:#555}
 
-/* ── BOTTOM BAR ── */
-#bottomBar {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  height: calc(var(--bar-h) + var(--safe-b));
-  padding-bottom: var(--safe-b);
-  background: linear-gradient(0deg, #2a1a3e, var(--bg));
-  border-top: 2px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  padding-left: 8px; padding-right: 8px;
-  gap: 6px; z-index: 100;
-}
+/* BOTTOM SHEET */
+#sheet{position:fixed;left:0;right:0;bottom:calc(var(--bar) + var(--safe-b));max-height:72dvh;background:var(--sf);border-top:1px solid var(--brd);border-radius:16px 16px 0 0;z-index:150;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow:hidden;display:flex;flex-direction:column}
+#sheet.open{transform:translateY(0)}
+#sheetGrab{width:100%;padding:10px;display:flex;justify-content:center;cursor:grab;flex-shrink:0}
+#sheetGrab::after{content:'';width:32px;height:4px;background:var(--brd);border-radius:2px}
+#sheetBody{padding:0 16px 20px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
 
-.pixel-btn {
-  font-family: var(--font);
-  font-size: clamp(6px, 1.8vw, 8px);
-  padding: 8px 12px;
-  background: #3a2a5e; color: #e0d0f0;
-  border: 2px solid #6a5a8e;
-  cursor: pointer;
-  text-transform: uppercase;
-  transition: background 0.15s, transform 0.1s;
-  white-space: nowrap;
-  min-height: 36px;
-  display: flex; align-items: center; gap: 4px;
-  border-radius: 2px;
-}
-.pixel-btn:hover { background: #5a4a7e; }
-.pixel-btn:active { transform: scale(0.95); }
-.pixel-btn.danger { background: #5e2a2a; border-color: #8e5a5a; }
-.pixel-btn.success { background: #2a5e2a; border-color: #5a8e5a; }
+.agent-card{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.agent-card .av{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.agent-card .info h2{font-size:clamp(8px,2.2vw,11px);margin-bottom:3px}
+.agent-card .info .role{font-size:clamp(5px,1.3vw,7px);color:var(--dim)}
 
-/* ── AGENT STATUS BAR (floating) ── */
-#agentStatusBar {
-  position: fixed;
-  bottom: calc(var(--bar-h) + var(--safe-b) + 6px);
-  left: 50%; transform: translateX(-50%);
-  display: flex; gap: 4px;
-  background: rgba(26,26,46,0.9);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 4px 8px;
-  z-index: 90;
-  max-width: 95vw;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-#agentStatusBar::-webkit-scrollbar { display: none; }
-.status-dot {
-  display: flex; align-items: center; gap: 3px;
-  font-size: clamp(5px, 1.2vw, 7px);
-  color: var(--text-dim);
-  white-space: nowrap;
-  padding: 2px 4px;
-  cursor: pointer;
-  border-radius: 2px;
-  transition: background 0.15s;
-}
-.status-dot:active { background: var(--surface); }
-.status-dot .dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.dot-working { background: var(--green); box-shadow: 0 0 4px var(--green); }
-.dot-idle { background: #e0e040; box-shadow: 0 0 4px #e0e040; }
-.dot-offline { background: var(--red); }
+.pill{display:inline-block;padding:3px 10px;font-size:clamp(5px,1.2vw,7px);font-family:var(--font);border-radius:10px;margin:6px 0 10px}
+.pill-w{background:rgba(44,182,125,.15);color:var(--acc2);border:1px solid rgba(44,182,125,.3)}
+.pill-i{background:rgba(255,137,6,.12);color:var(--warn);border:1px solid rgba(255,137,6,.25)}
+.pill-b{background:rgba(127,90,240,.12);color:var(--acc);border:1px solid rgba(127,90,240,.25)}
+.pill-o{background:rgba(255,255,255,.05);color:var(--dim2);border:1px solid var(--brd)}
 
-/* ── BOTTOM SHEET (mobile panel) ── */
-#bottomSheet {
-  position: fixed;
-  left: 0; right: 0;
-  bottom: calc(var(--bar-h) + var(--safe-b));
-  max-height: 70dvh;
-  background: var(--bg2);
-  border-top: 2px solid var(--border);
-  border-radius: 12px 12px 0 0;
-  z-index: 150;
-  transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-  display: flex; flex-direction: column;
-}
-#bottomSheet.open { transform: translateY(0); }
+.task-box{font-size:clamp(6px,1.4vw,7px);color:var(--dim);padding:8px 10px;background:var(--sf2);border-radius:8px;margin-bottom:10px;border-left:3px solid var(--acc2)}
 
-#sheetHandle {
-  width: 100%; padding: 10px;
-  display: flex; justify-content: center;
-  cursor: grab; flex-shrink: 0;
-}
-#sheetHandle::after {
-  content: '';
-  width: 36px; height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-}
+.btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.pbtn{font-family:var(--font);font-size:clamp(6px,1.5vw,8px);padding:10px;background:var(--sf2);color:var(--tx);border:1px solid var(--brd);cursor:pointer;border-radius:8px;text-align:center;transition:background .15s,transform .1s}
+.pbtn:active{transform:scale(.96);background:var(--brd)}
+.pbtn.green{background:rgba(44,182,125,.15);border-color:rgba(44,182,125,.3);color:var(--acc2)}
+.pbtn.red{background:rgba(229,49,112,.12);border-color:rgba(229,49,112,.25);color:var(--err)}
+.pbtn.full{grid-column:1/-1}
 
-#sheetContent {
-  padding: 0 16px 16px;
-  overflow-y: auto;
-  flex: 1;
-  -webkit-overflow-scrolling: touch;
-}
+.sfield{margin-bottom:8px}
+.sfield label{font-size:clamp(5px,1.1vw,6px);color:var(--dim2);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+.sfield input{width:100%;padding:10px 12px;font-family:var(--font);font-size:clamp(7px,1.6vw,9px);background:var(--bg);color:var(--tx);border:1px solid var(--brd);border-radius:8px;outline:none;transition:border-color .2s}
+.sfield input:focus{border-color:var(--acc)}
 
-#sheetContent h2 {
-  font-size: clamp(9px, 2.5vw, 12px);
-  color: var(--accent);
-  margin-bottom: 4px;
-  text-shadow: 1px 1px 0 #000;
-}
-#sheetContent .role-text {
-  font-size: clamp(6px, 1.5vw, 8px);
-  color: var(--text-dim);
-  margin-bottom: 8px;
-}
-#sheetContent .s-badge {
-  display: inline-block;
-  padding: 3px 10px;
-  font-size: clamp(6px, 1.5vw, 8px);
-  font-family: var(--font);
-  border-radius: 3px;
-  margin-bottom: 10px;
-}
-.s-badge.working { background: #1a3a1a; color: #80ff80; border: 1px solid #2a5a2a; }
-.s-badge.idle { background: #3a3a1a; color: #ffff80; border: 1px solid #5a5a2a; }
-.s-badge.offline { background: #3a1a1a; color: #ff8080; border: 1px solid #5a2a2a; }
-.s-badge.break { background: #1a2a3a; color: #80c0ff; border: 1px solid #2a4a5a; }
+.log-section{margin-top:8px}
+.log-section h3{font-size:clamp(5px,1.2vw,7px);color:var(--dim2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}
+.alog{max-height:120px;overflow-y:auto}
+.le{font-size:clamp(5px,1.1vw,6px);color:var(--dim);padding:4px 0;border-bottom:1px solid rgba(58,61,68,.4);line-height:1.7}
+.le .t{color:var(--dim2)}
 
-#sheetContent .task-text {
-  font-size: clamp(6px, 1.5vw, 8px);
-  color: #c0c0e0;
-  margin-bottom: 10px;
-  padding: 6px 8px;
-  background: var(--surface);
-  border-radius: 3px;
-}
+/* MINIMAP */
+#minimap{position:fixed;top:calc(var(--bar) + 8px);right:8px;width:100px;height:56px;background:rgba(22,22,26,.85);border:1px solid var(--brd);border-radius:6px;z-index:90;overflow:hidden}
+#minimapCanvas{width:100%;height:100%;image-rendering:pixelated}
 
-.sheet-btn-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-.sheet-btn-row .pixel-btn { justify-content: center; width: 100%; }
+/* MODAL */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;animation:fi .2s ease}
+@keyframes fi{from{opacity:0}}
+.modal{background:var(--sf);border:1px solid var(--brd);border-radius:12px;padding:20px;width:100%;max-width:360px;animation:su .25s ease}
+@keyframes su{from{transform:translateY(16px);opacity:0}}
+.modal h2{font-size:clamp(8px,2vw,11px);color:var(--acc);margin-bottom:16px}
+.modal .btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.color-row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.csw{width:30px;height:30px;border:2px solid var(--brd);border-radius:6px;cursor:pointer;transition:transform .1s}
+.csw.sel{border-color:var(--acc);box-shadow:0 0 10px rgba(127,90,240,.4);transform:scale(1.12)}
 
-.sheet-field {
-  margin-bottom: 8px;
-}
-.sheet-field label {
-  font-size: clamp(5px, 1.2vw, 7px);
-  color: var(--text-dim);
-  display: block;
-  margin-bottom: 4px;
-}
-.sheet-field input {
-  width: 100%;
-  padding: 10px;
-  font-family: var(--font);
-  font-size: clamp(7px, 1.8vw, 9px);
-  background: var(--surface);
-  color: var(--text);
-  border: 2px solid var(--border);
-  border-radius: 3px;
-  outline: none;
-}
-.sheet-field input:focus { border-color: var(--border-hi); }
+/* TOAST */
+.toast{position:fixed;top:calc(var(--bar) + 10px);left:50%;transform:translateX(-50%);background:var(--sf2);border:1px solid var(--brd);padding:8px 16px;font-size:clamp(6px,1.4vw,8px);font-family:var(--font);color:var(--tx);z-index:300;border-radius:8px;animation:fi .3s ease,fo .3s ease 2.7s forwards;pointer-events:none;white-space:nowrap}
+@keyframes fo{to{opacity:0;transform:translateX(-50%) translateY(-8px)}}
 
-.activity-log {
-  max-height: 150px;
-  overflow-y: auto;
-  margin-top: 6px;
-}
-.log-entry {
-  font-size: clamp(5px, 1.2vw, 7px);
-  color: var(--text-dim);
-  padding: 4px 0;
-  border-bottom: 1px solid #2a2a3a;
-  line-height: 1.6;
-}
-.log-entry .time { color: var(--text-dimmer); }
+.notif{position:fixed;top:calc(var(--bar) + 10px);right:12px;background:var(--acc2);color:#000;font-family:var(--font);font-size:6px;padding:6px 10px;border-radius:8px;z-index:90;animation:fi .3s ease,fo .3s ease 3.7s forwards;pointer-events:none}
 
-/* ── OVERLAY / MODALS ── */
-.modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.75);
-  z-index: 200;
-  display: flex; align-items: center; justify-content: center;
-  padding: 16px;
-  animation: fadeIn 0.2s ease;
-}
-@keyframes fadeIn { from { opacity: 0; } }
-.modal {
-  background: var(--bg2);
-  border: 2px solid var(--border);
-  border-radius: 6px;
-  padding: 20px;
-  width: 100%;
-  max-width: 380px;
-  animation: slideUp 0.25s ease;
-}
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } }
-.modal h2 {
-  font-size: clamp(8px, 2vw, 11px);
-  color: var(--accent);
-  margin-bottom: 16px;
-}
-.modal .sheet-field { margin-bottom: 12px; }
-.modal .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+/* LOADING */
+#loading{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity .5s}
+#loading.hide{opacity:0;pointer-events:none}
+#loading h1{font-size:clamp(10px,3vw,16px);color:var(--acc)}
+#loading p{font-size:clamp(6px,1.5vw,8px);color:var(--dim)}
+.ldots span{display:inline-block;width:8px;height:8px;background:var(--acc);margin:0 4px;border-radius:2px;animation:lb 1s infinite ease-in-out}
+.ldots span:nth-child(2){animation-delay:.15s}
+.ldots span:nth-child(3){animation-delay:.3s}
+@keyframes lb{0%,80%,100%{transform:scaleY(.4)}40%{transform:scaleY(1)}}
 
-.color-picker-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
-.color-swatch {
-  width: 28px; height: 28px;
-  border: 2px solid var(--border);
-  border-radius: 3px;
-  cursor: pointer;
-  transition: transform 0.1s;
-}
-.color-swatch.selected { border-color: var(--accent); box-shadow: 0 0 8px rgba(240,192,64,0.5); transform: scale(1.15); }
+/* EVENT FEED */
+#feedPanel{position:fixed;left:0;right:0;bottom:calc(var(--bar) + var(--safe-b));max-height:60dvh;background:var(--sf);border-top:1px solid var(--brd);border-radius:16px 16px 0 0;z-index:150;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow:hidden;display:flex;flex-direction:column}
+#feedPanel.open{transform:translateY(0)}
+#feedPanel .grab{width:100%;padding:10px;display:flex;justify-content:center;flex-shrink:0}
+#feedPanel .grab::after{content:'';width:32px;height:4px;background:var(--brd);border-radius:2px}
+#feedBody{padding:0 16px 16px;overflow-y:auto;flex:1}
+#feedBody h2{font-size:clamp(7px,1.8vw,9px);color:var(--acc);margin-bottom:10px}
+.feed-item{font-size:clamp(5px,1.2vw,7px);color:var(--dim);padding:6px 0;border-bottom:1px solid rgba(58,61,68,.3);display:flex;gap:8px;align-items:flex-start}
+.feed-item .fi-time{color:var(--dim2);flex-shrink:0;min-width:36px}
+.feed-item .fi-emoji{flex-shrink:0}
 
-/* ── TOAST ── */
-.toast {
-  position: fixed;
-  top: calc(var(--bar-h) + 8px);
-  left: 50%; transform: translateX(-50%);
-  background: var(--surface);
-  border: 2px solid var(--border);
-  padding: 8px 16px;
-  font-size: clamp(6px, 1.5vw, 8px);
-  font-family: var(--font);
-  color: #e0d0f0;
-  z-index: 300;
-  border-radius: 4px;
-  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
-  pointer-events: none;
-  white-space: nowrap;
-}
-@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } }
-@keyframes toastOut { to { opacity: 0; transform: translateX(-50%) translateY(-10px); } }
-
-/* ── NOTIFICATION BADGE ── */
-.notif-badge {
-  position: fixed;
-  top: calc(var(--bar-h) + 8px);
-  right: 12px;
-  background: var(--green);
-  color: #000;
-  font-family: var(--font);
-  font-size: 7px;
-  padding: 6px 10px;
-  border-radius: 4px;
-  z-index: 90;
-  animation: fadeIn 0.3s ease, toastOut 0.3s ease 3.7s forwards;
-  pointer-events: none;
-}
-
-/* ── LOADING SCREEN ── */
-#loadingScreen {
-  position: fixed; inset: 0;
-  background: var(--bg);
-  z-index: 999;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 20px;
-  transition: opacity 0.5s ease;
-}
-#loadingScreen.hide { opacity: 0; pointer-events: none; }
-#loadingScreen h1 {
-  font-family: var(--font);
-  font-size: clamp(10px, 3vw, 16px);
-  color: var(--accent);
-  text-shadow: 2px 2px 0 #000;
-}
-.loading-dots span {
-  display: inline-block;
-  width: 8px; height: 8px;
-  background: var(--accent);
-  margin: 0 4px;
-  animation: bounce 1.2s infinite ease-in-out;
-}
-.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
-@keyframes bounce { 0%,80%,100% { transform: scale(0); } 40% { transform: scale(1); } }
-
-/* ── DESKTOP tweaks ── */
-@media (min-width: 769px) {
-  #bottomSheet { max-width: 360px; right: 8px; left: auto; border-radius: 12px 12px 0 0; }
-  .pixel-btn { padding: 8px 14px; }
+@media(min-width:769px){
+  #sheet{max-width:380px;right:8px;left:auto;border-radius:16px 16px 0 0}
+  #feedPanel{max-width:340px;left:8px;right:auto}
+  #minimap{width:130px;height:73px}
 }
 </style>
 </head>
 <body>
-
-<div id="loadingScreen">
-  <h1>🏢 AI Office</h1>
-  <div class="loading-dots"><span></span><span></span><span></span></div>
-</div>
+<div id="loading"><h1>🏢 AI Office</h1><p>Loading workspace...</p><div class="ldots"><span></span><span></span><span></span></div></div>
 
 <div id="topBar">
-  <div class="office-name">🏢 Aleksa's AI Office</div>
-  <div class="info">
-    <span id="clockDisplay">--:--</span>
-    <span id="dateDisplay"></span>
-  </div>
+  <div class="logo">🏢 <span>Aleksa's AI Office</span></div>
+  <div class="info"><span id="clock">--:--</span><span id="date"></span></div>
 </div>
 
 <canvas id="gameCanvas"></canvas>
+<div id="minimap"><canvas id="minimapCanvas"></canvas></div>
+<div id="statusBar"></div>
 
-<div id="agentStatusBar"></div>
+<div id="sheet"><div id="sheetGrab"></div><div id="sheetBody"></div></div>
+<div id="feedPanel"><div class="grab"></div><div id="feedBody"></div></div>
 
-<div id="bottomSheet">
-  <div id="sheetHandle"></div>
-  <div id="sheetContent"></div>
-</div>
-
-<div id="bottomBar">
-  <button class="pixel-btn" onclick="showAddAgentModal()">➕ Agent</button>
-  <button class="pixel-btn" onclick="showBroadcastModal()">📢</button>
-  <button class="pixel-btn" onclick="triggerRandomEvent()">🎲</button>
-  <div style="flex:1"></div>
-  <span style="font-size:clamp(5px,1.2vw,7px);color:var(--text-dimmer)" id="fpsDisplay"></span>
+<div id="bottomNav">
+  <button class="nav-btn active" onclick="navTo('home')"><span class="ico">🏠</span><span>Home</span></button>
+  <button class="nav-btn" onclick="navTo('agents')"><span class="ico">👥</span><span>Agents</span></button>
+  <button class="nav-btn" onclick="navTo('events')"><span class="ico">⚡</span><span>Events</span></button>
+  <button class="nav-btn" onclick="navTo('add')"><span class="ico">➕</span><span>Add</span></button>
 </div>
 
 <script>
-// ============================================================
-// PIXEL OFFICE — Mobile-First Rewrite
-// ============================================================
+const C=document.getElementById('gameCanvas'),X=C.getContext('2d');
+const MC=document.getElementById('minimapCanvas'),MX=MC.getContext('2d');
 
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+// ── WORLD ──
+const W=640,H=360,PX=2;
+let scale=1;
 
-// ── RESPONSIVE SIZING ──
-const OFFICE_W = 320;
-const OFFICE_H = 180;
-let PX = 3;
-let canvasScale = 1;
-
-function resize() {
-  const w = window.innerWidth;
-  const h = window.innerHeight - 88; // top + bottom bars
-  // Calculate PX to fill screen nicely
-  const scaleX = w / OFFICE_W;
-  const scaleY = h / OFFICE_H;
-  canvasScale = Math.min(scaleX, scaleY);
-  // Set canvas internal resolution
-  canvas.width = OFFICE_W * PX;
-  canvas.height = OFFICE_H * PX;
-  // Scale canvas to fill
-  const cw = Math.floor(OFFICE_W * canvasScale);
-  const ch = Math.floor(OFFICE_H * canvasScale);
-  canvas.style.width = cw + 'px';
-  canvas.style.height = ch + 'px';
-  canvas.style.left = Math.floor((w - cw) / 2) + 'px';
-  canvas.style.top = Math.floor(44 + (h - ch) / 2) + 'px';
+function resize(){
+  const vw=window.innerWidth,vh=window.innerHeight-96;
+  scale=Math.min(vw/(W*PX),vh/(H*PX));
+  const cw=Math.floor(W*PX*scale),ch=Math.floor(H*PX*scale);
+  C.width=W*PX;C.height=H*PX;
+  C.style.width=cw+'px';C.style.height=ch+'px';
+  C.style.left=Math.floor((vw-cw)/2)+'px';
+  C.style.top=Math.floor(48+(vh-ch)/2)+'px';
+  MC.width=130;MC.height=73;
 }
-window.addEventListener('resize', resize);
-resize();
+window.addEventListener('resize',resize);resize();
 
-// ── PIXEL HELPERS ──
-function px(x, y, w, h, color) {
-  ctx.fillStyle = color;
-  ctx.fillRect(x * PX, y * PX, w * PX, h * PX);
-}
-function lerpColor(c1, c2, t) {
-  t = Math.max(0, Math.min(1, t));
-  const r1=parseInt(c1.slice(1,3),16), g1=parseInt(c1.slice(3,5),16), b1=parseInt(c1.slice(5,7),16);
-  const r2=parseInt(c2.slice(1,3),16), g2=parseInt(c2.slice(3,5),16), b2=parseInt(c2.slice(5,7),16);
-  return `rgb(${Math.floor(r1+(r2-r1)*t)},${Math.floor(g1+(g2-g1)*t)},${Math.floor(b1+(b2-b1)*t)})`;
-}
+function p(x,y,w,h,c){X.fillStyle=c;X.fillRect(x*PX,y*PX,w*PX,h*PX)}
+function mp(x,y,w,h,c){MX.fillStyle=c;MX.fillRect(x*.2,y*.2,Math.max(w*.2,1),Math.max(h*.2,1))}
 
 // ── TIME ──
-function getTimeInfo() {
-  const now = new Date();
-  return { h: now.getHours(), m: now.getMinutes(), s: now.getSeconds(), now };
+function ti(){const n=new Date();return{h:n.getHours(),m:n.getMinutes(),s:n.getSeconds(),now:n}}
+function skyL(){const h=ti().h;if(h>=7&&h<18)return 1;if(h>=6&&h<7)return(h-6);if(h>=18&&h<20)return 1-(h-18)/2;return .15}
+
+// ── COLORS ──
+function lc(a,b,t){
+  t=Math.max(0,Math.min(1,t));
+  const r1=parseInt(a.slice(1,3),16),g1=parseInt(a.slice(3,5),16),b1=parseInt(a.slice(5,7),16);
+  const r2=parseInt(b.slice(1,3),16),g2=parseInt(b.slice(3,5),16),b2_=parseInt(b.slice(5,7),16);
+  return`rgb(${r1+(r2-r1)*t|0},${g1+(g2-g1)*t|0},${b1+(b2_-b1)*t|0})`
 }
-function getSkyColor() {
-  const { h } = getTimeInfo();
-  if (h >= 6 && h < 8) return { top:'#ff9966', bot:'#ffcc99', light: 0.5+(h-6)*0.25 };
-  if (h >= 8 && h < 17) return { top:'#4a90d9', bot:'#87ceeb', light: 1 };
-  if (h >= 17 && h < 19) return { top:'#ff6633', bot:'#ffaa66', light: 1-(h-17)*0.25 };
-  if (h >= 19 && h < 21) return { top:'#2a1a4e', bot:'#4a3a6e', light: 0.3 };
-  return { top:'#0a0a1e', bot:'#1a1a3e', light: 0.15 };
+function lit(c,L){return lc(c,'#0a0a10',1-L)}
+
+// ── OFFICE DRAWING ──
+const FY=260; // floor Y
+
+function drawOffice(){
+  const L=skyL();
+
+  // Sky through windows
+  const skyTop=L>.5?'#5a8ed0':'#1a1a30';
+  const skyBot=L>.5?'#8ec4f0':'#2a2a40';
+
+  // Ceiling
+  p(0,0,W,50,lit('#e8e4dd',L));
+  // Ceiling lights
+  for(let lx=80;lx<W;lx+=140){
+    p(lx,46,60,4,lit('#d0d0d0',L));
+    p(lx+5,42,50,4,lit('#f0f0f0',L));
+    // Light glow on ceiling
+    if(L>.3){X.fillStyle=`rgba(255,250,230,${.06*L})`;X.fillRect((lx-10)*PX,44*PX,80*PX,6*PX)}
+  }
+
+  // Wall
+  p(0,50,W,60,lit('#f0ece4',L));
+  // Accent stripe
+  p(0,96,W,3,lit('#d4c8b4',L));
+  // Baseboard
+  p(0,107,W,3,lit('#8a7a60',L));
+
+  // ── WINDOWS (3 large) ──
+  const wins=[{x:40,w:80},{x:260,w:80},{x:470,w:80}];
+  wins.forEach(w=>{
+    // Frame
+    p(w.x,54,w.w,48,lit('#6a5a40',L));
+    p(w.x+2,56,w.w-4,44,lit('#7a6a50',L));
+    // Glass
+    p(w.x+4,58,w.w-8,40,'#000');
+    // Sky gradient
+    for(let i=0;i<40;i++){
+      const t=i/40;
+      p(w.x+4,58+i,w.w-8,1,lc(skyTop,skyBot,t));
+    }
+    // Mullion cross
+    p(w.x+4+Math.floor((w.w-8)/2)-1,58,2,40,lit('#7a6a50',L));
+    p(w.x+4,58+19,w.w-8,2,lit('#7a6a50',L));
+    // Stars at night
+    if(L<.3){
+      for(let s=0;s<4;s++){
+        const sx=w.x+8+Math.floor(Math.sin(w.x+s*17)*((w.w-16)/2)+(w.w-16)/2);
+        const sy=60+Math.floor(Math.cos(w.x+s*13)*16+16);
+        p(sx,sy,1,1,'#fff');
+      }
+    }
+    // Daylight glow
+    if(L>.5){
+      X.fillStyle=`rgba(255,250,220,${.03*L})`;
+      X.fillRect(w.x*PX,100*PX,(w.w)*PX,170*PX);
+    }
+    // Blinds
+    for(let b=0;b<6;b++){p(w.x+4,58+b*7,w.w-8,1,`rgba(200,190,170,${.3*L})`)}
+  });
+
+  // ── WALL DECOR ──
+  // Whiteboard
+  p(170,56,60,36,lit('#e0e0e0',L));p(171,57,58,34,lit('#f8f8f8',L));
+  p(174,62,20,1,lit('#3060c0',L));p(174,66,30,1,lit('#c03030',L));
+  p(174,70,15,1,lit('#308030',L));p(174,74,25,1,lit('#c0a020',L));
+  p(200,62,16,8,lit('#e8e0d0',L)); // sticky note
+  p(201,63,14,6,lit('#fff4a0',L));
+  // Clock
+  p(385,58,20,20,lit('#d0d0d0',L));p(386,59,18,18,lit('#f8f8f8',L));
+  p(394,67,2,2,'#333');
+  // Wall art (abstract)
+  p(560,58,50,34,lit('#2a2a2a',L));p(562,60,46,30,lit('#304060',L));
+  p(570,66,10,8,lit('#6090c0',L));p(584,62,12,14,lit('#c06040',L));
+  p(578,72,8,12,lit('#40a060',L));
+
+  // ── FLOOR ──
+  // Carpet tiles pattern
+  for(let fx=0;fx<W;fx+=16){
+    for(let fy=FY;fy<H;fy+=16){
+      const alt=((fx/16+fy/16)%2===0);
+      p(fx,fy,16,16,lit(alt?'#585868':'#525262',L));
+      // Subtle texture
+      if(Math.random()>.7)p(fx+Math.random()*14|0,fy+Math.random()*14|0,1,1,lit(alt?'#5e5e6e':'#4e4e5e',L));
+    }
+  }
+  p(0,FY,W,1,lit('#484858',L)); // floor edge
+
+  // Light pools on floor from ceiling lights
+  if(L>.3){
+    for(let lx=80;lx<W;lx+=140){
+      X.fillStyle=`rgba(255,250,230,${.04*L})`;
+      X.beginPath();X.ellipse((lx+30)*PX,(FY+40)*PX,50*PX,30*PX,0,0,Math.PI*2);X.fill();
+    }
+  }
+
+  // ── DESK CLUSTERS ──
+  drawDeskCluster(40,FY-10,'L');
+  drawDeskCluster(180,FY-10,'R');
+  drawDeskCluster(340,FY-10,'L');
+  drawDeskCluster(480,FY-10,'R');
+
+  // ── MEETING ROOM (right side) ──
+  drawMeetingRoom(540,110);
+
+  // ── KITCHEN / BREAK AREA ──
+  drawKitchen(10,FY+30);
+
+  // ── LOUNGE ──
+  drawLounge(260,FY+30);
+
+  // ── SERVER RACK ──
+  drawServerRack(600,FY+20);
+
+  // ── PLANTS ──
+  drawPlant(15,FY-30,'tall');
+  drawPlant(155,FY-25,'small');
+  drawPlant(320,FY-28,'tall');
+  drawPlant(460,FY-24,'small');
+  drawPlant(535,FY-30,'tall');
+  drawPlant(625,FY-26,'small');
+
+  // ── ENTRY ──
+  // Door
+  p(0,60,4,50,lit('#6a4020',L));
+  p(4,62,16,46,lit('#8a5a30',L));
+  p(5,63,14,44,lit('#a07040',L));
+  p(16,84,3,3,lit('#d0a040',L)); // handle
+  // Welcome mat
+  p(6,108,18,4,lit('#408040',L));
+
+  // ── COAT RACK ──
+  p(28,80,2,28,lit('#5a4a30',L));
+  p(24,78,10,3,lit('#5a4a30',L));
+  p(25,76,3,3,lit('#3060c0',L)); // jacket
+  p(30,76,3,3,lit('#c03030',L)); // jacket
 }
 
-// ── OFFICE LAYOUT ──
-const FLOOR_Y = 145;
-const WALL_Y = 36;
-const CEILING_Y = 26;
+function drawDeskCluster(x,y,side){
+  const L=skyL();
+  // Desk surface (L-shape)
+  p(x,y,50,4,lit('#c4a882',L));
+  p(x+1,y+4,2,14,lit('#9a8060',L));p(x+47,y+4,2,14,lit('#9a8060',L)); // legs
 
-const furniture = {
-  desks: [
-    { x:25, y:FLOOR_Y-20, id:'d0' }, { x:65, y:FLOOR_Y-20, id:'d1' },
-    { x:105, y:FLOOR_Y-20, id:'d2' }, { x:165, y:FLOOR_Y-20, id:'d3' },
-    { x:205, y:FLOOR_Y-20, id:'d4' }, { x:245, y:FLOOR_Y-20, id:'d5' },
-  ],
-  couch: { x:135, y:FLOOR_Y-14, id:'couch' },
-  coffee: { x:278, y:FLOOR_Y-20, id:'coffee' },
-  water: { x:295, y:FLOOR_Y-18, id:'water' },
-  plants: [{ x:8, y:FLOOR_Y-22 }, { x:155, y:FLOOR_Y-24 }, { x:305, y:FLOOR_Y-22 }],
-  whiteboard: { x:88, y:WALL_Y+4 },
-  door: { x:4, y:WALL_Y },
-  clock: { x:198, y:WALL_Y+2 },
-  windows: [{ x:48, y:WALL_Y }, { x:148, y:WALL_Y }, { x:238, y:WALL_Y }],
-};
+  // Monitor
+  p(x+8,y-18,16,14,lit('#2a2a2a',L));
+  p(x+9,y-17,14,12,lit('#1a2a40',L)); // screen
+  // Screen content
+  const sc=Date.now()/2000;
+  p(x+10,y-16,5,1,`hsl(${(sc*50+x)%360},60%,60%)`);
+  p(x+10,y-14,8,1,lit('#4070a0',L));
+  p(x+10,y-12,6,1,lit('#4070a0',L));
+  p(x+10,y-10,10,1,lit('#306040',L));
+  // Monitor stand
+  p(x+14,y-4,4,4,lit('#2a2a2a',L));
+  p(x+12,y,8,1,lit('#2a2a2a',L));
 
-// ── AGENT CLASS ──
-const SHIRT_PRESETS = {
-  purple:'#7030a0', blue:'#3060c0', green:'#308030', red:'#c03030',
-  yellow:'#c0a020', orange:'#d06020', cyan:'#20a0a0', pink:'#c04080'
-};
+  // Keyboard
+  p(x+8,y+1,12,3,lit('#d0d0d0',L));
+  for(let k=0;k<5;k++)p(x+9+k*2,y+2,1,1,lit('#aaa',L));
 
-class Agent {
-  constructor(name, shirtColor, hairColor, role, sprite) {
-    this.name = name;
-    this.shirtColor = shirtColor;
-    this.hairColor = hairColor || '#402010';
-    this.skinColor = '#e8b880';
-    this.pantsColor = '#304060';
-    this.role = role || 'Agent';
-    this.sprite = sprite || null;
-    this.x = 40 + Math.random() * 240;
-    this.y = FLOOR_Y;
-    this.targetX = this.x;
-    this.speed = 0.4 + Math.random() * 0.2;
-    this.direction = 1;
-    this.animFrame = 0;
-    this.animTimer = 0;
-    this.state = 'idle';
-    this.status = 'idle';
-    this.task = '';
-    this.speechBubble = '';
-    this.speechTimer = 0;
-    this.hasCoffee = false;
-    this.assignedDesk = null;
-    this.stateTimer = 0;
-    this.nextBehavior = 3 + Math.random() * 8;
-    this.activityLog = [];
-    this._pending = null;
+  // Mouse
+  p(x+24,y+1,3,4,lit('#c0c0c0',L));p(x+25,y+1,1,1,lit('#888',L));
+
+  // Coffee cup
+  p(x+38,y+1,4,3,lit('#f0f0f0',L));p(x+39,y,2,1,lit('#a07040',L));
+  // Papers
+  p(x+30,y+1,6,3,lit('#f8f4e8',L));
+
+  // Chair
+  const cx=x+16;
+  p(cx,y+18,14,10,lit('#3a3a5a',L)); // seat
+  p(cx+2,y+14,10,4,lit('#4a4a6a',L)); // back
+  // Armrests
+  p(cx-1,y+16,2,6,lit('#3a3a5a',L));
+  p(cx+13,y+16,2,6,lit('#3a3a5a',L));
+  // Wheels (subtle)
+  p(cx+3,y+28,2,1,lit('#222',L));p(cx+9,y+28,2,1,lit('#222',L));
+
+  // Second monitor (some desks)
+  if(side==='L'){
+    p(x+28,y-16,14,12,lit('#2a2a2a',L));
+    p(x+29,y-15,12,10,lit('#1a2a40',L));
+    p(x+30,y-14,4,1,lit('#4080c0',L));
+    p(x+30,y-12,8,1,lit('#306040',L));
+    p(x+33,y-4,4,3,lit('#2a2a2a',L));
+  }
+}
+
+function drawMeetingRoom(x,y){
+  const L=skyL();
+  // Glass walls
+  X.fillStyle=`rgba(140,180,220,${.12*L+.05})`;
+  X.fillRect(x*PX,y*PX,90*PX,60*PX);
+  // Glass wall lines
+  p(x,y,1,60,`rgba(160,200,240,${.3+.2*L})`);
+  p(x,y,90,1,`rgba(160,200,240,${.3+.2*L})`);
+  // Table
+  p(x+15,y+15,60,25,lit('#8a7a60',L));
+  p(x+16,y+16,58,23,lit('#a08a68',L));
+  // Chairs around table
+  for(let i=0;i<3;i++){
+    p(x+20+i*18,y+10,10,6,lit('#4a4a6a',L));
+    p(x+20+i*18,y+40,10,6,lit('#4a4a6a',L));
+  }
+  // TV
+  p(x+70,y+5,16,12,lit('#1a1a1a',L));
+  p(x+71,y+6,14,10,lit('#2040a0',L));
+  // Whiteboard in room
+  p(x+5,y+5,8,20,lit('#f0f0f0',L));
+  p(x+6,y+8,4,1,lit('#c03030',L));
+  p(x+6,y+12,6,1,lit('#3060c0',L));
+}
+
+function drawKitchen(x,y){
+  const L=skyL();
+  // Counter
+  p(x,y,100,6,lit('#d0c8b8',L));
+  p(x,y+6,100,14,lit('#b4a890',L));
+  // Coffee machine
+  p(x+10,y-14,14,14,lit('#3a3a3a',L));
+  p(x+11,y-13,12,8,lit('#2a2a2a',L));
+  p(x+22,y-12,1,1,lit('#40ff40',L)); // LED
+  // Steam
+  if(Math.random()>.4){
+    const st=Date.now()/300;
+    X.fillStyle='rgba(200,200,220,.25)';
+    X.fillRect((x+16+Math.sin(st))*PX,(y-16)*PX,2*PX,2*PX);
+  }
+  // Microwave
+  p(x+32,y-10,14,10,lit('#c0c0c0',L));
+  p(x+33,y-9,8,8,lit('#1a1a1a',L));
+  p(x+42,y-7,2,2,lit('#888',L));
+  // Fridge
+  p(x+55,y-24,18,24,lit('#d0d0d4',L));
+  p(x+56,y-23,16,10,lit('#c4c4c8',L));
+  p(x+56,y-12,16,10,lit('#c4c4c8',L));
+  p(x+72,y-20,2,3,lit('#aaa',L)); // handle
+  p(x+72,y-9,2,3,lit('#aaa',L));
+  // Snack shelf
+  p(x+80,y-18,16,18,lit('#8a6a40',L));
+  p(x+81,y-17,14,4,lit('#c04040',L)); // box
+  p(x+81,y-12,14,4,lit('#40a040',L)); // box
+  p(x+81,y-7,14,4,lit('#4060c0',L)); // box
+}
+
+function drawLounge(x,y){
+  const L=skyL();
+  // Couch
+  p(x,y,60,14,lit('#5a3828',L));
+  p(x+2,y+2,26,10,lit('#7a4838',L));
+  p(x+30,y+2,26,10,lit('#7a4838',L));
+  p(x-3,y-2,4,16,lit('#4a2818',L)); // arm
+  p(x+59,y-2,4,16,lit('#4a2818',L)); // arm
+  p(x,y-8,60,8,lit('#5a3828',L)); // back
+  // Cushions
+  p(x+5,y+3,10,3,lit('#8a5848',L));
+  p(x+45,y+3,10,3,lit('#8a5848',L));
+
+  // Coffee table
+  p(x+15,y+18,30,10,lit('#6a5a40',L));
+  p(x+16,y+19,28,8,lit('#7a6a50',L));
+  // Mug on table
+  p(x+22,y+19,4,3,lit('#f0f0f0',L));
+  // Magazine
+  p(x+30,y+20,8,4,lit('#c06040',L));
+
+  // Bean bag
+  p(x+68,y+4,16,14,lit('#7f5af0',L));
+  p(x+69,y+5,14,12,lit('#9070f0',L));
+
+  // Bookshelf
+  p(x+90,y-20,20,34,lit('#6a5030',L));
+  const bookColors=['#c04040','#3060c0','#40a040','#c0a020','#8040a0','#c06020','#4090a0','#a04060'];
+  for(let r=0;r<4;r++){
+    for(let b=0;b<4;b++){
+      p(x+92+b*4,y-18+r*8,3,7,lit(bookColors[(r*4+b)%bookColors.length],L));
+    }
+  }
+}
+
+function drawServerRack(x,y){
+  const L=skyL();
+  p(x,y,30,60,lit('#2a2a30',L));
+  p(x+1,y+1,28,58,lit('#1a1a20',L));
+  // Server units with blinking lights
+  for(let s=0;s<5;s++){
+    p(x+3,y+4+s*11,24,9,lit('#2a2a34',L));
+    p(x+4,y+5+s*11,22,7,lit('#222228',L));
+    // LEDs
+    const blink=Math.sin(Date.now()/300+s*1.5)>.3;
+    p(x+22,y+6+s*11,2,2,blink?'#40ff40':'#1a3a1a');
+    p(x+19,y+6+s*11,2,2,'#ff8800');
+    // Ventilation lines
+    for(let v=0;v<3;v++)p(x+6+v*4,y+8+s*11,2,1,lit('#333',L));
+  }
+}
+
+function drawPlant(x,y,type){
+  const L=skyL();
+  const sw=Math.sin(Date.now()/1500+x)*.8;
+  if(type==='tall'){
+    // Pot
+    p(x,y+16,10,6,lit('#a06030',L));p(x-1,y+22,12,3,lit('#805020',L));
+    // Trunk
+    p(x+4,y+6,3,10,lit('#4a6030',L));
+    // Leaves
+    const lc_=lit('#3a8a3a',L);const lc2=lit('#50a050',L);
+    p(x-2+sw,y-6,6,6,lc_);p(x+3+sw,y-8,6,6,lc2);
+    p(x-1+sw,y,8,6,lc_);p(x+4+sw,y-2,6,6,lc2);
+    p(x+sw,y+4,8,4,lc_);
+  } else {
+    // Small succulent
+    p(x,y+4,8,4,lit('#b08050',L));
+    p(x+1,y,6,5,lit('#40a060',L));
+    p(x+2,y-2,4,3,lit('#50b070',L));
+    p(x+3,y-3,2,2,lit('#60c080',L));
+  }
+}
+
+// ── AGENTS ──
+const SHIRTS={purple:'#7f5af0',blue:'#3060c0',green:'#2cb67d',red:'#e53170',yellow:'#ff8906',orange:'#d06020',cyan:'#20a0b0',pink:'#c040a0'};
+
+class Agent{
+  constructor(n,sc,hc,role,spr){
+    this.name=n;this.shirtColor=sc;this.hairColor=hc||'#402010';
+    this.skinColor='#e8b880';this.pantsColor='#3a3a4a';this.role=role||'Agent';this.spr=spr||null;
+    this.x=80+Math.random()*480;this.y=FY-6;this.tx=this.x;
+    this.speed=.3+Math.random()*.15;this.dir=1;this.af=0;this.at=0;
+    this.state='idle';this.status='idle';this.task='';
+    this.bubble='';this.bt=0;this.coffee=false;this.desk=null;
+    this.st=0;this.nb=3+Math.random()*8;this.log_=[];this._pend=null;
     this.log('Arrived at the office');
   }
-  log(msg) {
-    const t = getTimeInfo();
-    this.activityLog.unshift({ time: `${String(t.h).padStart(2,'0')}:${String(t.m).padStart(2,'0')}`, msg });
-    if (this.activityLog.length > 30) this.activityLog.pop();
-  }
-  say(text, dur) { this.speechBubble = text; this.speechTimer = dur || 4; }
-  assignTask(task) {
-    this.task = task; this.status = 'working'; this.state = 'walking';
-    const free = furniture.desks.filter(d => !agents.some(a => a !== this && a.assignedDesk === d.id && a.status === 'working'));
-    const desk = free.length ? free[Math.floor(Math.random()*free.length)] : furniture.desks[0];
-    this.assignedDesk = desk.id;
-    this.targetX = desk.x + 10;
-    this.say('On it! 💻', 3);
-    this.log('Started: ' + task);
-    updateStatusBar();
-  }
-  makeIdle() {
-    this.status = 'idle'; this.state = 'idle'; this.task = ''; this.assignedDesk = null;
-    this.nextBehavior = 2 + Math.random() * 5; this.stateTimer = 0;
-    this.say('Break time ☕', 2); this.log('Now idle');
-    updateStatusBar();
-  }
-  makeOffline() { this.status = 'offline'; this.state = 'idle'; this.task = ''; this.log('Went offline'); updateStatusBar(); }
-  update(dt) {
-    this.animTimer += dt;
-    if (this.animTimer > 0.2) { this.animFrame = (this.animFrame + 1) % 4; this.animTimer = 0; }
-    if (this.speechTimer > 0) { this.speechTimer -= dt; if (this.speechTimer <= 0) this.speechBubble = ''; }
-    this.stateTimer += dt;
-    if (this.status === 'offline') return;
-
-    if (this.state === 'walking') {
-      const dx = this.targetX - this.x;
-      const spd = this.hasCoffee ? this.speed * 0.6 : this.speed;
-      if (Math.abs(dx) > 1) {
-        this.direction = dx > 0 ? 1 : -1;
-        this.x += this.direction * spd * dt * 60;
-      } else { this.x = this.targetX; this.onArrived(); }
+  log(m){const t=ti();this.log_.unshift({time:`${String(t.h).padStart(2,'0')}:${String(t.m).padStart(2,'0')}`,msg:m});if(this.log_.length>30)this.log_.pop();addFeed(this.name,m)}
+  say(t,d){this.bubble=t;this.bt=d||4}
+  assignTask(t){this.task=t;this.status='working';this.state='walking';
+    const desks=[40,180,340,480];const di=desks[Math.floor(Math.random()*desks.length)];
+    this.desk=di;this.tx=di+20;this.say('On it! 💻',3);this.log('Started: '+t);updStatus()}
+  makeIdle(){this.status='idle';this.state='idle';this.task='';this.desk=null;this.nb=2+Math.random()*5;this.st=0;this.say('Break time ☕',2);this.log('Now idle');updStatus()}
+  makeOff(){this.status='offline';this.state='idle';this.task='';this.log('Went offline');updStatus()}
+  update(dt){
+    this.at+=dt;if(this.at>.18){this.af=(this.af+1)%4;this.at=0}
+    if(this.bt>0){this.bt-=dt;if(this.bt<=0)this.bubble=''}
+    this.st+=dt;
+    if(this.status==='offline')return;
+    if(this.state==='walking'){
+      const dx=this.tx-this.x;const sp=this.coffee?this.speed*.6:this.speed;
+      if(Math.abs(dx)>1){this.dir=dx>0?1:-1;this.x+=this.dir*sp*dt*60}
+      else{this.x=this.tx;this.onArr()}
     }
-    if (this.status === 'idle' && this.state !== 'walking') {
-      this.nextBehavior -= dt;
-      if (this.nextBehavior <= 0) { this.pickIdle(); this.nextBehavior = 5 + Math.random() * 12; }
+    if(this.status==='idle'&&this.state!=='walking'){
+      this.nb-=dt;if(this.nb<=0){this.pickIdle();this.nb=5+Math.random()*12}
     }
-    if (this.status === 'working' && this.state === 'working' && this.stateTimer > 25 + Math.random() * 35) {
-      this.say('Done! ✅', 3); this.log('Completed: ' + this.task);
-      showNotif(this.name + ' finished a task!');
-      this.makeIdle();
+    if(this.status==='working'&&this.state==='working'&&this.st>25+Math.random()*35){
+      this.say('Done! ✅',3);this.log('Completed: '+this.task);showNotif(this.name+' finished!');this.makeIdle()
     }
   }
-  onArrived() {
-    if (this.status === 'working') { this.state = 'working'; this.stateTimer = 0; return; }
-    if (this._pending === 'coffee') {
-      this.state = 'coffee'; this.say('☕ Brewing...', 3); this.log('Getting coffee');
-      setTimeout(() => { if (this.state === 'coffee') { this.hasCoffee = true; this.say('☕', 2); this.state = 'idle'; } }, 3000);
-    } else if (this._pending === 'couch') {
-      this.state = 'sitting'; this.say('😌', 2); this.log('Relaxing');
-    } else if (this._pending === 'water') {
-      this.state = 'idle'; this.say('💧', 2); this.log('Hydrating');
-    } else { this.state = 'idle'; }
-    this._pending = null;
+  onArr(){
+    if(this.status==='working'){this.state='working';this.st=0;return}
+    if(this._pend==='coffee'){this.state='coffee';this.say('☕ Brewing...',3);this.log('Getting coffee');setTimeout(()=>{if(this.state==='coffee'){this.coffee=true;this.say('☕',2);this.state='idle'}},3000)}
+    else if(this._pend==='couch'){this.state='sitting';this.say('😌',2);this.log('Relaxing on couch')}
+    else if(this._pend==='water'){this.state='idle';this.say('💧',2);this.log('Hydrating')}
+    else{this.state='idle'}
+    this._pend=null
   }
-  pickIdle() {
-    const b = ['wander','wander','coffee','couch','water','wander'][Math.floor(Math.random()*6)];
-    this._pending = b; this.state = 'walking';
-    if (b === 'coffee') this.targetX = furniture.coffee.x + 2;
-    else if (b === 'couch') this.targetX = furniture.couch.x + Math.random() * 16;
-    else if (b === 'water') this.targetX = furniture.water.x + 2;
-    else this.targetX = 20 + Math.random() * 280;
+  pickIdle(){
+    const b=['wander','wander','coffee','couch','water','wander'][Math.random()*6|0];
+    this._pend=b;this.state='walking';
+    if(b==='coffee')this.tx=25;
+    else if(b==='couch')this.tx=280+Math.random()*30;
+    else if(b==='water')this.tx=450;
+    else this.tx=40+Math.random()*540
   }
 }
 
-let agents = [
-  new Agent('Supreme Magus', '#7030a0', '#2a1040', 'AI Wizard', 'mage'),
-  new Agent('Research Bot', '#3060c0', '#804020', 'Researcher'),
-  new Agent('Code Monkey', '#308030', '#202020', 'Developer'),
-  new Agent('Data Cruncher', '#c03030', '#603010', 'Analyst'),
-  new Agent('Pixel Pete', '#c0a020', '#c0a040', 'Office Mgr'),
+// ── FEED ──
+const feed=[];
+function addFeed(name,msg){
+  const t=ti();
+  feed.unshift({time:`${String(t.h).padStart(2,'0')}:${String(t.m).padStart(2,'0')}`,name,msg,emoji:msg.match(/[\u{1F600}-\u{1F9FF}]/u)?.[0]||'📋'});
+  if(feed.length>50)feed.pop()
+}
+
+let agents=[
+  new Agent('Supreme Magus','#7f5af0','#2a1040','AI Wizard','mage'),
+  new Agent('Research Bot','#3060c0','#804020','Researcher'),
+  new Agent('Code Monkey','#2cb67d','#202020','Developer'),
+  new Agent('Data Cruncher','#e53170','#603010','Analyst'),
+  new Agent('Pixel Pete','#ff8906','#c0a040','Office Mgr'),
 ];
 agents[0].assignTask('Orchestrating agent workflows');
 agents[2].assignTask('Refactoring the main module');
 
-// ── DRAWING ──
-function drawSky() {
-  const sky = getSkyColor();
-  for (let i = 0; i < 20; i++) {
-    const t = i / 20;
-    const [r1,g1,b1] = [sky.top,sky.bot].map(c => [parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)]);
-    const r = Math.floor(r1[0][0] + (r1[1][0] - r1[0][0]) * t);
-    // Simplified: just fill gradient
-    px(0, CEILING_Y - 20 + i, OFFICE_W, 1, lerpColor(sky.top, sky.bot, t));
-  }
-}
+// ── DRAW AGENT ──
+function drawAgent(a){
+  const x=Math.round(a.x),y=a.y;
+  const isSit=a.state==='working'||a.state==='sitting';
+  const isWalk=a.state==='walking';
+  const isMage=a.spr==='mage';
+  const L=skyL();
+  const bodyY=isSit?y-10:y-16;
+  const legOff=isWalk?Math.sin(a.af*Math.PI/2)*2:0;
 
-function drawOffice() {
-  const sky = getSkyColor();
-  const L = sky.light;
-
-  drawSky();
-
-  // Ceiling
-  px(0, CEILING_Y, OFFICE_W, 2, lerpColor('#5a4a3a', '#2a2018', 1-L));
-  // Wall
-  px(0, CEILING_Y+2, OFFICE_W, WALL_Y-CEILING_Y+36, lerpColor('#d4c4a8', '#6a6050', 1-L));
-  // Wall accent
-  px(0, WALL_Y+26, OFFICE_W, 2, lerpColor('#b0a080', '#584830', 1-L));
-  // Baseboard
-  px(0, WALL_Y+28, OFFICE_W, 2, lerpColor('#6a5a3a', '#3a2a18', 1-L));
-  // Floor
-  for (let x = 0; x < OFFICE_W; x += 8) {
-    px(x, FLOOR_Y, 8, 40, lerpColor((Math.floor(x/8)%2===0)?'#8a7a60':'#7a6a50', '#3a3020', 1-L));
-  }
-  px(0, FLOOR_Y, OFFICE_W, 1, lerpColor('#6a5a40', '#2a2010', 1-L));
-
-  // Windows
-  furniture.windows.forEach(w => {
-    px(w.x, w.y, 24, 20, '#5a4a3a');
-    px(w.x+1, w.y+1, 22, 18, '#000');
-    px(w.x+2, w.y+2, 20, 16, getSkyColor().bot);
-    px(w.x+2, w.y+2, 20, 8, getSkyColor().top);
-    px(w.x+11, w.y+1, 2, 18, '#5a4a3a');
-    px(w.x+1, w.y+9, 22, 2, '#5a4a3a');
-    if (L < 0.3) [[w.x+5,w.y+4],[w.x+15,w.y+6],[w.x+8,w.y+13]].forEach(s => px(s[0],s[1],1,1,'#fff'));
-    if (L > 0.7) { ctx.fillStyle='rgba(255,255,200,0.06)'; ctx.fillRect((w.x-2)*PX,(w.y+20)*PX,28*PX,30*PX); }
-  });
-
-  // Door
-  const d = furniture.door;
-  px(d.x, d.y, 14, 28, lerpColor('#6a4020','#3a2010',1-L));
-  px(d.x+1, d.y+1, 12, 26, lerpColor('#8a6030','#4a3018',1-L));
-  px(d.x+10, d.y+14, 2, 2, '#c0a040');
-
-  // Whiteboard
-  const wb = furniture.whiteboard;
-  px(wb.x, wb.y, 30, 18, '#c0c0c0');
-  px(wb.x+1, wb.y+1, 28, 16, '#f0f0f0');
-  px(wb.x+3, wb.y+4, 8, 1, '#3060c0');
-  px(wb.x+3, wb.y+7, 12, 1, '#c03030');
-  px(wb.x+3, wb.y+10, 6, 1, '#308030');
-  px(wb.x+14, wb.y+4, 10, 1, '#3060c0');
-
-  // Clock
-  const cl = furniture.clock;
-  const ti = getTimeInfo();
-  px(cl.x, cl.y, 10, 10, '#d0d0d0');
-  px(cl.x+1, cl.y+1, 8, 8, '#f8f8f8');
-  px(cl.x+4, cl.y+4, 2, 2, '#000');
-
-  // Desks
-  furniture.desks.forEach(d => {
-    px(d.x, d.y, 24, 3, lerpColor('#8a6030','#4a3018',1-L));
-    px(d.x+1, d.y+3, 2, 10, lerpColor('#6a4a20','#3a2810',1-L));
-    px(d.x+21, d.y+3, 2, 10, lerpColor('#6a4a20','#3a2810',1-L));
-    px(d.x+8, d.y-8, 10, 7, '#2a2a2a');
-    px(d.x+9, d.y-7, 8, 5, Math.random()>0.98?'#4060a0':'#305090');
-    if (Math.random()>0.3) { px(d.x+10, d.y-6, 4, 1, '#80a0e0'); px(d.x+10, d.y-4, 6, 1, '#80a0e0'); }
-    px(d.x+12, d.y-1, 2, 1, '#2a2a2a');
-    px(d.x+11, d.y, 4, 1, '#2a2a2a');
-    px(d.x+8, d.y+1, 8, 2, '#404040');
-    // Chair
-    px(d.x+10, d.y+8, 8, 4, lerpColor('#4a4a4a','#2a2a2a',1-L));
-    px(d.x+11, d.y+2, 6, 6, lerpColor('#3a3a5a','#1a1a2a',1-L));
-  });
-
-  // Couch
-  const co = furniture.couch;
-  px(co.x, co.y, 28, 8, lerpColor('#6a3020','#3a1810',1-L));
-  px(co.x+1, co.y+1, 12, 5, lerpColor('#8a4030','#4a2018',1-L));
-  px(co.x+14, co.y+1, 12, 5, lerpColor('#8a4030','#4a2018',1-L));
-  px(co.x, co.y-6, 28, 6, lerpColor('#6a3020','#3a1810',1-L));
-  px(co.x-2, co.y-4, 3, 10, lerpColor('#5a2818','#2a1408',1-L));
-  px(co.x+27, co.y-4, 3, 10, lerpColor('#5a2818','#2a1408',1-L));
-
-  // Coffee machine
-  const cf = furniture.coffee;
-  px(cf.x-2, cf.y+6, 14, 2, lerpColor('#6a4a20','#3a2810',1-L));
-  px(cf.x, cf.y+8, 2, 8, lerpColor('#5a3a18','#2a1a08',1-L));
-  px(cf.x+8, cf.y+8, 2, 8, lerpColor('#5a3a18','#2a1a08',1-L));
-  px(cf.x, cf.y, 10, 6, '#3a3a3a');
-  px(cf.x+1, cf.y+1, 8, 4, '#2a2a2a');
-  px(cf.x+1, cf.y-2, 8, 2, '#4a4a4a');
-  px(cf.x+8, cf.y+1, 1, 1, '#40ff40');
-  // Steam
-  const st = Date.now() / 200;
-  if (Math.random()>0.3) { ctx.fillStyle='rgba(200,200,220,0.4)'; ctx.fillRect((cf.x+4+Math.sin(st*0.7))*PX,(cf.y-3-Math.sin(st)*2)*PX,2*PX,PX); }
-
-  // Water cooler
-  const wt = furniture.water;
-  px(wt.x, wt.y+2, 8, 10, lerpColor('#c0d0e0','#607080',1-L));
-  px(wt.x+1, wt.y-4, 6, 6, '#a0d0f0');
-  px(wt.x+2, wt.y-5, 4, 2, '#80b0d0');
-  px(wt.x-1, wt.y+12, 10, 4, '#404040');
-
-  // Plants
-  furniture.plants.forEach(p => {
-    px(p.x, p.y+8, 8, 6, lerpColor('#a06030','#503018',1-L));
-    px(p.x-1, p.y+14, 10, 2, lerpColor('#805020','#402810',1-L));
-    const sw = Math.sin(Date.now()/1000 + p.x) * 0.5;
-    const lc = lerpColor('#40a040','#205020',1-L);
-    px(p.x+2+sw, p.y, 4, 3, lc);
-    px(p.x+1+sw, p.y+2, 6, 3, lc);
-    px(p.x+sw, p.y+4, 8, 3, lc);
-    px(p.x+3, p.y+5, 2, 3, '#2a6020');
-  });
-}
-
-function drawAgent(agent) {
-  const x = Math.round(agent.x);
-  const y = agent.y;
-  const dir = agent.direction;
-  const frame = agent.animFrame;
-  const isWalking = agent.state === 'walking';
-  const isSitting = agent.state === 'working' || agent.state === 'sitting';
-  const isMage = agent.sprite === 'mage';
+  if(a.status==='offline')X.globalAlpha=.35;
 
   // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.2)';
-  ctx.beginPath();
-  ctx.ellipse((x+4)*PX, (y+1)*PX, 5*PX, 1.5*PX, 0, 0, Math.PI*2);
-  ctx.fill();
-
-  const bodyY = isSitting ? y - 14 : y - 20;
-  const legOff = isWalking ? Math.sin(frame * Math.PI/2) * 2 : 0;
-
-  if (agent.status === 'offline') ctx.globalAlpha = 0.4;
+  X.fillStyle='rgba(0,0,0,.18)';
+  X.beginPath();X.ellipse((x+5)*PX,(y+2)*PX,7*PX,2*PX,0,0,Math.PI*2);X.fill();
 
   // Legs
-  if (!isSitting) {
-    px(x+2, bodyY+14, 2, 4+legOff, agent.pantsColor);
-    px(x+5, bodyY+14, 2, 4-legOff, agent.pantsColor);
-    px(x+1, bodyY+18+legOff, 3, 2, '#2a2020');
-    px(x+5, bodyY+18-legOff, 3, 2, '#2a2020');
-  } else {
-    px(x+1, bodyY+14, 3, 2, agent.pantsColor);
-    px(x+5, bodyY+14, 3, 2, agent.pantsColor);
-    px(x, bodyY+16, 3, 2, agent.pantsColor);
-    px(x+6, bodyY+16, 3, 2, agent.pantsColor);
+  if(!isSit){
+    p(x+2,bodyY+12,3,5+legOff,lit(a.pantsColor,L));
+    p(x+7,bodyY+12,3,5-legOff,lit(a.pantsColor,L));
+    p(x+1,bodyY+17+legOff,4,2,lit('#2a2020',L));
+    p(x+7,bodyY+17-legOff,4,2,lit('#2a2020',L));
+  }else{
+    p(x+1,bodyY+12,4,3,lit(a.pantsColor,L));
+    p(x+7,bodyY+12,4,3,lit(a.pantsColor,L))
   }
 
   // Body
-  if (isMage) {
-    px(x+1, bodyY+6, 7, 8, agent.shirtColor);
-    px(x, bodyY+10, 9, 4, agent.shirtColor);
-    px(x+1, bodyY+13, 7, 1, '#f0c040');
-  } else {
-    px(x+1, bodyY+6, 7, 8, agent.shirtColor);
+  if(isMage){
+    p(x+1,bodyY+4,10,8,lit(a.shirtColor,L));
+    p(x,bodyY+8,12,4,lit(a.shirtColor,L));
+    p(x+1,bodyY+11,10,1,lit('#f0c040',L));
+  }else{
+    p(x+1,bodyY+4,10,8,lit(a.shirtColor,L));
+    // Collar
+    p(x+4,bodyY+4,4,1,lc(a.shirtColor,'#ffffff',.3));
   }
 
   // Arms
-  const armWave = agent.state === 'working' ? Math.sin(Date.now()/150) : 0;
-  px(dir===1?x+7:x, bodyY+7, 2, 5+armWave, agent.shirtColor);
-  px(dir===1?x:x+7, bodyY+7, 2, 5, agent.shirtColor);
-  px(dir===1?x+7:x, bodyY+12, 2, 1, agent.skinColor);
-  px(dir===1?x:x+7, bodyY+12, 2, 1, agent.skinColor);
+  const aw=a.state==='working'?Math.sin(Date.now()/200)*1:0;
+  p(a.dir===1?x+10:x-1,bodyY+5,2,6+aw,lit(a.shirtColor,L));
+  p(a.dir===1?x-1:x+10,bodyY+5,2,6,lit(a.shirtColor,L));
+  p(a.dir===1?x+10:x-1,bodyY+11,2,1,lit(a.skinColor,L));
+  p(a.dir===1?x-1:x+10,bodyY+11,2,1,lit(a.skinColor,L));
 
   // Head
-  px(x+1, bodyY, 7, 6, agent.skinColor);
+  p(x+1,bodyY-2,10,6,lit(a.skinColor,L));
 
-  // Hair / Hat
-  if (isMage) {
-    px(x, bodyY-1, 9, 2, agent.shirtColor);
-    px(x+1, bodyY-3, 7, 2, agent.shirtColor);
-    px(x+2, bodyY-5, 5, 2, agent.shirtColor);
-    px(x+3, bodyY-6, 3, 1, agent.shirtColor);
-    px(x+4, bodyY-7, 1, 1, '#f0c040');
-  } else {
-    px(x+1, bodyY-1, 7, 2, agent.hairColor);
-    px(dir===1?x+7:x+1, bodyY, 1, 3, agent.hairColor);
+  // Hair
+  if(isMage){
+    p(x,bodyY-4,12,3,lit(a.shirtColor,L));
+    p(x+1,bodyY-6,10,3,lit(a.shirtColor,L));
+    p(x+2,bodyY-8,8,2,lit(a.shirtColor,L));
+    p(x+3,bodyY-9,6,2,lit(a.shirtColor,L));
+    p(x+4,bodyY-10,4,1,lit(a.shirtColor,L));
+    p(x+5,bodyY-11,2,1,lit('#f0c040',L)); // star
+  }else{
+    p(x+1,bodyY-3,10,2,lit(a.hairColor,L));
+    p(a.dir===1?x+9:x+1,bodyY-1,2,3,lit(a.hairColor,L));
   }
 
   // Eyes
-  px(dir===1?x+4:x+2, bodyY+2, 1, 1, '#000');
-  px(dir===1?x+6:x+4, bodyY+2, 1, 1, '#000');
+  const ex=a.dir===1?4:2;
+  p(x+ex,bodyY,2,2,lit('#1a1a2a',L));
+  p(x+ex+4,bodyY,2,2,lit('#1a1a2a',L));
+  // Eye shine
+  p(x+ex+1,bodyY,1,1,'rgba(255,255,255,.6)');
+  p(x+ex+5,bodyY,1,1,'rgba(255,255,255,.6)');
   // Mouth
-  px(x+4, bodyY+4, 2, 1, '#c08060');
+  p(x+5,bodyY+3,3,1,lit('#c08060',L));
 
-  // Coffee cup
-  if (agent.hasCoffee) {
-    const cx = dir===1 ? x+8 : x-3;
-    px(cx, bodyY+10, 3, 3, '#f0f0f0');
-    px(cx+1, bodyY+9, 1, 1, '#a08060');
+  // Coffee
+  if(a.coffee){
+    const cx=a.dir===1?x+11:x-4;
+    p(cx,bodyY+9,3,3,lit('#f0f0f0',L));p(cx+1,bodyY+8,1,1,lit('#a07040',L))
   }
 
-  ctx.globalAlpha = 1;
+  X.globalAlpha=1;
 
-  // Name tag with background
-  const nameY = bodyY - 10;
-  ctx.font = `${3*PX}px 'Press Start 2P', monospace`;
-  const nm = ctx.measureText(agent.name);
-  const nw = nm.width / PX;
-  const nx = x + 4 - nw/2;
-  // Background
-  ctx.fillStyle = 'rgba(0,0,0,0.55)';
-  const pad = 2;
-  ctx.fillRect((nx-pad)*PX, (nameY-4)*PX, (nw+pad*2)*PX, 6*PX);
-  // Border
-  ctx.fillStyle = agent.status==='working'?'rgba(64,192,64,0.4)':agent.status==='offline'?'rgba(224,64,64,0.3)':'rgba(224,224,64,0.3)';
-  ctx.fillRect((nx-pad)*PX, (nameY+2)*PX, (nw+pad*2)*PX, PX);
+  // Name label
+  X.font=`${4*PX}px 'Press Start 2P',monospace`;
+  const nm=X.measureText(a.name);const nw=nm.width/PX;const nx=x+5-nw/2;
+  // Background pill
+  const py=bodyY-16;
+  X.fillStyle='rgba(22,22,26,.8)';
+  const pad=3;
+  X.beginPath();X.roundRect((nx-pad)*PX,(py-5)*PX,(nw+pad*2)*PX,9*PX,3*PX);X.fill();
+  // Status line
+  X.fillStyle=a.status==='working'?'rgba(44,182,125,.6)':a.status==='offline'?'rgba(85,85,85,.5)':'rgba(255,137,6,.5)';
+  X.fillRect((nx-pad)*PX,(py+4)*PX,(nw+pad*2)*PX,PX);
   // Text
-  ctx.fillStyle = '#fff';
-  ctx.fillText(agent.name, nx*PX, (nameY)*PX);
+  X.fillStyle='#fff';X.fillText(a.name,nx*PX,(py)*PX);
 
-  // Speech bubble
-  if (agent.speechBubble) drawBubble(x+4, nameY-8, agent.speechBubble);
-  else if (agent.state==='working' && agent.task) drawBubble(x+4, nameY-8, agent.task.substring(0,22)+(agent.task.length>22?'…':''));
+  // Bubble
+  if(a.bubble)drawBub(x+5,py-10,a.bubble);
+  else if(a.state==='working'&&a.task){
+    const tt=a.task.length>20?a.task.substring(0,20)+'…':a.task;
+    drawBub(x+5,py-10,tt)
+  }
+
+  // Minimap dot
+  const mc=a.status==='working'?'#2cb67d':a.status==='offline'?'#555':'#ff8906';
+  mp(x,y-4,6,6,mc);
 }
 
-function drawBubble(x, y, text) {
-  ctx.font = `${3*PX}px 'Press Start 2P', monospace`;
-  const m = ctx.measureText(text);
-  const bw = m.width/PX + 8;
-  const bh = 8;
-  const bx = x - bw/2;
-  const by = y - bh;
-
-  // Rounded bubble
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  const r = 2 * PX;
-  ctx.roundRect(bx*PX, by*PX, bw*PX, bh*PX, r);
-  ctx.fill();
-  ctx.strokeStyle = '#aaa';
-  ctx.lineWidth = PX * 0.5;
-  ctx.stroke();
-
+function drawBub(x,y,text){
+  X.font=`${3*PX}px 'Press Start 2P',monospace`;
+  const m=X.measureText(text);const bw=m.width/PX+10;const bh=10;
+  const bx=x-bw/2;const by=y-bh;
+  X.fillStyle='rgba(36,38,41,.92)';
+  X.beginPath();X.roundRect(bx*PX,by*PX,bw*PX,bh*PX,4*PX);X.fill();
+  X.strokeStyle='rgba(58,61,68,.6)';X.lineWidth=PX*.5;X.stroke();
   // Tail
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.moveTo((x-1)*PX, (by+bh)*PX);
-  ctx.lineTo(x*PX, (by+bh+2)*PX);
-  ctx.lineTo((x+1)*PX, (by+bh)*PX);
-  ctx.fill();
-
-  // Text
-  ctx.fillStyle = '#222';
-  ctx.fillText(text, (bx+4)*PX, (by+5.5)*PX);
+  X.fillStyle='rgba(36,38,41,.92)';
+  X.beginPath();X.moveTo((x-2)*PX,(by+bh)*PX);X.lineTo(x*PX,(by+bh+3)*PX);X.lineTo((x+2)*PX,(by+bh)*PX);X.fill();
+  X.fillStyle='#e0e0e0';X.fillText(text,(bx+5)*PX,(by+7)*PX);
 }
 
-// ── RANDOM EVENTS ──
-const randomEvents = [
-  a => { a[0].say('Coffee anyone? ☕', 4); },
-  a => { const i=Math.floor(Math.random()*a.length); a[i].say(`Hey ${a[(i+1)%a.length].name}! 👋`, 3); },
-  a => { const i=Math.floor(Math.random()*a.length); a[i].say('😂 lmao', 3); setTimeout(()=>a.forEach(ag=>{if(ag!==a[i]&&ag.status!=='offline')ag.say('😂',2)}),1500); },
-  a => { a[Math.floor(Math.random()*a.length)].say('💡 Idea!', 3); },
-  a => { a[Math.floor(Math.random()*a.length)].say('🎵 *humming*', 3); },
-  a => { a[Math.floor(Math.random()*a.length)].say('Who took my stapler?', 3); },
+// ── EVENTS ──
+const randEv=[
+  a=>{a[0].say('Coffee anyone? ☕',4)},
+  a=>{const i=Math.random()*a.length|0;a[i].say(`Hey ${a[(i+1)%a.length].name}! 👋`,3)},
+  a=>{const i=Math.random()*a.length|0;a[i].say('😂',3);setTimeout(()=>a.forEach(g=>{if(g!==a[i]&&g.status!=='offline')g.say('😂',2)}),1500)},
+  a=>{a[Math.random()*a.length|0].say('💡 Big idea!',3)},
+  a=>{a[Math.random()*a.length|0].say('🎵 *vibing*',3)},
+  a=>{a[Math.random()*a.length|0].say('Has anyone seen my charger?',3)},
 ];
-let nextEventTime = 15 + Math.random() * 30;
+let nextEv=15+Math.random()*30;
+function trigEv(){const ac=agents.filter(a=>a.status!=='offline');if(!ac.length)return;randEv[Math.random()*randEv.length|0](ac);showToast('🎲 Random event!')}
 
-function triggerRandomEvent() {
-  const active = agents.filter(a => a.status !== 'offline');
-  if (!active.length) return;
-  randomEvents[Math.floor(Math.random()*randomEvents.length)](active);
-  showToast('🎲 Random event!');
+// ── INTERACTION ──
+function canvasPos(e){
+  const r=C.getBoundingClientRect();
+  const cx=e.touches?e.touches[0].clientX:e.clientX;
+  const cy=e.touches?e.touches[0].clientY:e.clientY;
+  return{x:(cx-r.left)/r.width*W,y:(cy-r.top)/r.height*H}
 }
-
-// ── TOUCH & CLICK ──
-function getCanvasPos(e) {
-  const rect = canvas.getBoundingClientRect();
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  return {
-    x: (clientX - rect.left) / rect.width * OFFICE_W,
-    y: (clientY - rect.top) / rect.height * OFFICE_H
-  };
-}
-
-function hitTestAgents(mx, my) {
-  for (let i = agents.length-1; i >= 0; i--) {
-    const a = agents[i];
-    const ay = (a.state==='working'||a.state==='sitting') ? a.y-14 : a.y-20;
-    if (mx >= a.x-4 && mx <= a.x+14 && my >= ay-2 && my <= a.y+2) return a;
+function hitAgent(mx,my){
+  for(let i=agents.length-1;i>=0;i--){
+    const a=agents[i];const ay=(a.state==='working'||a.state==='sitting')?a.y-10:a.y-16;
+    if(mx>=a.x-4&&mx<=a.x+16&&my>=ay-12&&my<=a.y+4)return a
   }
-  return null;
+  return null
 }
+C.addEventListener('click',e=>{const pos=canvasPos(e);const a=hitAgent(pos.x,pos.y);if(a)openSheet(a);else closeSheet()});
+let tst=0;
+C.addEventListener('touchstart',()=>{tst=Date.now()},{passive:true});
+C.addEventListener('touchend',e=>{if(Date.now()-tst>500){const t=e.changedTouches[0];const r=C.getBoundingClientRect();const a=hitAgent((t.clientX-r.left)/r.width*W,(t.clientY-r.top)/r.height*H);if(a)openSheet(a)}},{passive:true});
 
-canvas.addEventListener('click', e => {
-  const p = getCanvasPos(e);
-  const a = hitTestAgents(p.x, p.y);
-  if (a) openSheet(a);
-  else closeSheet();
-});
+// ── SHEET ──
+let selAgent=null;const sheet=document.getElementById('sheet');
+function openSheet(a){selAgent=a;sheet.classList.add('open');renSheet()}
+function closeSheet(){sheet.classList.remove('open');selAgent=null}
+let sheetTY=0;
+document.getElementById('sheetGrab').addEventListener('touchstart',e=>{sheetTY=e.touches[0].clientY},{passive:true});
+document.getElementById('sheetGrab').addEventListener('touchmove',e=>{if(e.touches[0].clientY-sheetTY>60)closeSheet()},{passive:true});
 
-// Touch support
-let touchStartTime = 0;
-canvas.addEventListener('touchstart', e => { touchStartTime = Date.now(); }, { passive: true });
-canvas.addEventListener('touchend', e => {
-  const dt = Date.now() - touchStartTime;
-  if (dt > 500) {
-    // Long press — handled via touchend
-    const touch = e.changedTouches[0];
-    const rect = canvas.getBoundingClientRect();
-    const mx = (touch.clientX - rect.left) / rect.width * OFFICE_W;
-    const my = (touch.clientY - rect.top) / rect.height * OFFICE_H;
-    const a = hitTestAgents(mx, my);
-    if (a) { openSheet(a); }
-  }
-}, { passive: true });
-
-// ── BOTTOM SHEET ──
-let selectedAgent = null;
-const sheet = document.getElementById('bottomSheet');
-
-function openSheet(agent) {
-  selectedAgent = agent;
-  sheet.classList.add('open');
-  renderSheet();
-}
-function closeSheet() {
-  sheet.classList.remove('open');
-  selectedAgent = null;
-}
-
-// Swipe down to close
-let sheetTouchY = 0;
-document.getElementById('sheetHandle').addEventListener('touchstart', e => {
-  sheetTouchY = e.touches[0].clientY;
-}, { passive: true });
-document.getElementById('sheetHandle').addEventListener('touchmove', e => {
-  const dy = e.touches[0].clientY - sheetTouchY;
-  if (dy > 60) closeSheet();
-}, { passive: true });
-
-function renderSheet() {
-  if (!selectedAgent) return;
-  const a = selectedAgent;
-  document.getElementById('sheetContent').innerHTML = `
-    <h2>${a.sprite==='mage'?'🧙‍♂️ ':''}${a.name}</h2>
-    <p class="role-text">${a.role}</p>
-    <span class="s-badge ${a.status}">${a.status.toUpperCase()}</span>
-    ${a.task ? `<div class="task-text">📋 ${a.task}</div>` : ''}
-
-    <div class="sheet-btn-row">
-      <button class="pixel-btn success" onclick="sheetAssign()">📝 Task</button>
-      <button class="pixel-btn" onclick="sheetIdle()">☕ Idle</button>
-      <button class="pixel-btn" onclick="sheetMsg()">💬 Say</button>
-      <button class="pixel-btn danger" onclick="sheetToggle()">${a.status==='offline'?'🟢 On':'🔴 Off'}</button>
+function renSheet(){
+  if(!selAgent)return;const a=selAgent;
+  const avColors={mage:'#7f5af0',null:'#3a3d44'};
+  const avBg=a.spr==='mage'?'background:linear-gradient(135deg,#7f5af0,#5a3ad0)':'background:'+a.shirtColor;
+  const avEmoji=a.spr==='mage'?'🧙‍♂️':'👤';
+  const ps=a.status==='working'?'pill-w':a.status==='offline'?'pill-o':a.status==='break'?'pill-b':'pill-i';
+  document.getElementById('sheetBody').innerHTML=`
+    <div class="agent-card">
+      <div class="av" style="${avBg}">${avEmoji}</div>
+      <div class="info"><h2>${a.name}</h2><p class="role">${a.role}</p></div>
     </div>
-
-    <div class="sheet-field">
-      <label>ASSIGN TASK</label>
-      <input type="text" id="taskIn" placeholder="Enter task..." value="${a.task||''}" />
+    <span class="pill ${ps}">${a.status.toUpperCase()}</span>
+    ${a.task?`<div class="task-box">📋 ${a.task}</div>`:''}
+    <div class="btn-grid">
+      <button class="pbtn green" onclick="document.getElementById('tin').focus()">📝 Task</button>
+      <button class="pbtn" onclick="sheetIdle()">☕ Idle</button>
+      <button class="pbtn" onclick="document.getElementById('min').focus()">💬 Say</button>
+      <button class="pbtn red" onclick="sheetTog()">${a.status==='offline'?'🟢 Online':'🔴 Offline'}</button>
     </div>
-    <button class="pixel-btn success" onclick="submitTask()" style="width:100%;justify-content:center;margin-bottom:10px">▶ Start</button>
-
-    <div class="sheet-field">
-      <label>SEND MESSAGE</label>
-      <input type="text" id="msgIn" placeholder="Say something..." />
-    </div>
-    <button class="pixel-btn" onclick="submitMsg()" style="width:100%;justify-content:center;margin-bottom:10px">💬 Send</button>
-
-    <label style="font-size:clamp(5px,1.2vw,7px);color:var(--text-dim);margin-bottom:4px;display:block">ACTIVITY LOG</label>
-    <div class="activity-log">
-      ${a.activityLog.map(l => `<div class="log-entry"><span class="time">[${l.time}]</span> ${l.msg}</div>`).join('')}
-    </div>
-  `;
+    <div class="sfield"><label>Assign Task</label><input id="tin" type="text" placeholder="Enter task..." value="${a.task||''}"/></div>
+    <button class="pbtn green full" onclick="subTask()">▶ Start Task</button>
+    <div class="sfield" style="margin-top:8px"><label>Send Message</label><input id="min" type="text" placeholder="Say something..."/></div>
+    <button class="pbtn full" onclick="subMsg()">💬 Send</button>
+    <div class="log-section"><h3>Activity Log</h3>
+      <div class="alog">${a.log_.map(l=>`<div class="le"><span class="t">[${l.time}]</span> ${l.msg}</div>`).join('')}</div>
+    </div>`;
 }
+function sheetIdle(){if(selAgent){selAgent.makeIdle();renSheet()}}
+function sheetTog(){if(!selAgent)return;if(selAgent.status==='offline'){selAgent.status='idle';selAgent.state='idle';selAgent.say("I'm back! 👋",3);selAgent.log('Back online')}else{selAgent.makeOff()}renSheet();updStatus()}
+function subTask(){const v=document.getElementById('tin')?.value.trim();if(v&&selAgent){selAgent.assignTask(v);renSheet()}}
+function subMsg(){const v=document.getElementById('min')?.value.trim();if(v&&selAgent){selAgent.say(v,5);selAgent.log('Said: "'+v+'"');document.getElementById('min').value='';renSheet()}}
 
-function sheetAssign() { document.getElementById('taskIn')?.focus(); }
-function sheetIdle() { if (selectedAgent) { selectedAgent.makeIdle(); renderSheet(); } }
-function sheetMsg() { document.getElementById('msgIn')?.focus(); }
-function sheetToggle() {
-  if (!selectedAgent) return;
-  if (selectedAgent.status === 'offline') {
-    selectedAgent.status = 'idle'; selectedAgent.state = 'idle';
-    selectedAgent.say("I'm back! 👋", 3); selectedAgent.log('Back online');
-  } else { selectedAgent.makeOffline(); }
-  renderSheet(); updateStatusBar();
-}
-function submitTask() {
-  const v = document.getElementById('taskIn')?.value.trim();
-  if (v && selectedAgent) { selectedAgent.assignTask(v); renderSheet(); }
-}
-function submitMsg() {
-  const v = document.getElementById('msgIn')?.value.trim();
-  if (v && selectedAgent) { selectedAgent.say(v, 5); selectedAgent.log('Said: "'+v+'"'); document.getElementById('msgIn').value=''; renderSheet(); }
-}
-
-// Enter key on inputs
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeSheet();
-  if (e.key === 'Enter') {
-    if (document.activeElement?.id === 'taskIn') submitTask();
-    if (document.activeElement?.id === 'msgIn') submitMsg();
-    if (document.activeElement?.id === 'broadcastMsg') doBroadcast();
-    if (document.activeElement?.id === 'newAgentName') doAddAgent();
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeSheet();closeFeed()}
+  if(e.key==='Enter'){
+    if(document.activeElement?.id==='tin')subTask();
+    if(document.activeElement?.id==='min')subMsg();
+    if(document.activeElement?.id==='bMsg')doBcast();
+    if(document.activeElement?.id==='nName')doAdd();
   }
 });
 
 // ── STATUS BAR ──
-function updateStatusBar() {
-  const bar = document.getElementById('agentStatusBar');
-  bar.innerHTML = agents.map((a, i) => `
-    <div class="status-dot" onclick="openSheet(agents[${i}])">
-      <div class="dot dot-${a.status}"></div>
-      <span>${a.name.split(' ')[0]}</span>
-    </div>
-  `).join('');
+function updStatus(){
+  document.getElementById('statusBar').innerHTML=agents.map((a,i)=>{
+    const dc=a.status==='working'?'d-w':a.status==='offline'?'d-o':a.status==='break'?'d-b':'d-i';
+    return`<div class="sdot" onclick="openSheet(agents[${i}])"><div class="d ${dc}"></div><span>${a.name.split(' ')[0]}</span></div>`
+  }).join('')
 }
-updateStatusBar();
+updStatus();
+
+// ── NAV ──
+function navTo(tab){
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>b.classList.toggle('active',['home','agents','events','add'][i]===tab));
+  closeSheet();closeFeed();
+  if(tab==='agents')showAgentList();
+  if(tab==='events'){showFeed()}
+  if(tab==='add')showAddModal();
+}
+function showAgentList(){
+  // Open sheet with all agents
+  const sb=document.getElementById('sheetBody');
+  sb.innerHTML='<h2 style="font-size:clamp(8px,2vw,11px);color:var(--acc);margin-bottom:12px">👥 All Agents</h2>'+
+    agents.map((a,i)=>{
+      const ps=a.status==='working'?'pill-w':a.status==='offline'?'pill-o':'pill-i';
+      return`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--brd);cursor:pointer" onclick="openSheet(agents[${i}])">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:32px;height:32px;border-radius:8px;background:${a.shirtColor};display:flex;align-items:center;justify-content:center;font-size:14px">${a.spr==='mage'?'🧙‍♂️':'👤'}</div>
+          <div><div style="font-size:clamp(6px,1.5vw,8px)">${a.name}</div><div style="font-size:clamp(5px,1.1vw,6px);color:var(--dim)">${a.role}</div></div>
+        </div>
+        <span class="pill ${ps}" style="margin:0">${a.status}</span>
+      </div>`
+    }).join('');
+  sheet.classList.add('open');selAgent=null
+}
+
+// ── FEED ──
+function showFeed(){
+  const fb=document.getElementById('feedBody');
+  fb.innerHTML='<h2>⚡ Activity Feed</h2>'+
+    feed.slice(0,30).map(f=>`<div class="feed-item"><span class="fi-time">${f.time}</span><span class="fi-emoji">${f.emoji}</span><span><b>${f.name}</b> ${f.msg}</span></div>`).join('');
+  document.getElementById('feedPanel').classList.add('open')
+}
+function closeFeed(){document.getElementById('feedPanel').classList.remove('open')}
 
 // ── MODALS ──
-function showAddAgentModal() {
-  const colors = Object.entries(SHIRT_PRESETS);
-  const ov = document.createElement('div');
-  ov.className = 'modal-overlay';
-  ov.onclick = e => { if (e.target === ov) ov.remove(); };
-  ov.innerHTML = `
-    <div class="modal">
-      <h2>➕ New Agent</h2>
-      <div class="sheet-field"><label>NAME</label><input type="text" id="newAgentName" placeholder="Agent name..." /></div>
-      <div class="sheet-field"><label>ROLE</label><input type="text" id="newAgentRole" placeholder="Role..." /></div>
-      <div class="sheet-field">
-        <label>COLOR</label>
-        <div class="color-picker-row">${colors.map(([n,c]) => `<div class="color-swatch${n==='purple'?' selected':''}" data-color="${c}" style="background:${c}" onclick="document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));this.classList.add('selected')"></div>`).join('')}</div>
-      </div>
-      <div class="btn-row">
-        <button class="pixel-btn" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
-        <button class="pixel-btn success" onclick="doAddAgent()">Add</button>
-      </div>
-    </div>`;
-  document.body.appendChild(ov);
+function showAddModal(){
+  const colors=Object.entries(SHIRTS);
+  const ov=document.createElement('div');ov.className='modal-ov';
+  ov.onclick=e=>{if(e.target===ov)ov.remove()};
+  ov.innerHTML=`<div class="modal"><h2>➕ New Agent</h2>
+    <div class="sfield"><label>Name</label><input id="nName" type="text" placeholder="Agent name..."/></div>
+    <div class="sfield"><label>Role</label><input id="nRole" type="text" placeholder="Role..."/></div>
+    <div class="sfield"><label>Color</label><div class="color-row">${colors.map(([n,c])=>`<div class="csw${n==='purple'?' sel':''}" data-color="${c}" style="background:${c}" onclick="document.querySelectorAll('.csw').forEach(s=>s.classList.remove('sel'));this.classList.add('sel')"></div>`).join('')}</div></div>
+    <div class="btn-row"><button class="pbtn" onclick="this.closest('.modal-ov').remove()">Cancel</button><button class="pbtn green" onclick="doAdd()">Add</button></div></div>`;
+  document.body.appendChild(ov)
+}
+function doAdd(){
+  const n=document.getElementById('nName')?.value.trim();const r=document.getElementById('nRole')?.value.trim();
+  const s=document.querySelector('.csw.sel');if(!n){showToast('❌ Enter a name');return}
+  const c=s?s.dataset.color:'#888';
+  const hairs=['#402010','#804020','#202020','#c0a040','#603010'];
+  agents.push(new Agent(n,c,hairs[Math.random()*hairs.length|0],r||'Agent'));
+  document.querySelector('.modal-ov')?.remove();showToast('✅ '+n+' joined!');updStatus()
+}
+function showBcastModal(){
+  const ov=document.createElement('div');ov.className='modal-ov';
+  ov.onclick=e=>{if(e.target===ov)ov.remove()};
+  ov.innerHTML=`<div class="modal"><h2>📢 Broadcast</h2>
+    <div class="sfield"><label>Message</label><input id="bMsg" type="text" placeholder="Hey everyone..."/></div>
+    <div class="btn-row"><button class="pbtn" onclick="this.closest('.modal-ov').remove()">Cancel</button><button class="pbtn green" onclick="doBcast()">Send</button></div></div>`;
+  document.body.appendChild(ov)
+}
+function doBcast(){
+  const m=document.getElementById('bMsg')?.value.trim();if(!m)return;
+  agents.forEach(a=>{if(a.status!=='offline')setTimeout(()=>{a.say(m,4);a.log('Broadcast: "'+m+'"')},Math.random()*1000)});
+  document.querySelector('.modal-ov')?.remove();showToast('📢 Sent!')
 }
 
-function doAddAgent() {
-  const name = document.getElementById('newAgentName')?.value.trim();
-  const role = document.getElementById('newAgentRole')?.value.trim();
-  const sel = document.querySelector('.color-swatch.selected');
-  if (!name) { showToast('❌ Enter a name'); return; }
-  const color = sel ? sel.dataset.color : '#808080';
-  const hairs = ['#402010','#804020','#202020','#c0a040','#603010'];
-  agents.push(new Agent(name, color, hairs[Math.floor(Math.random()*hairs.length)], role||'Agent'));
-  document.querySelector('.modal-overlay')?.remove();
-  showToast('✅ '+name+' joined!');
-  updateStatusBar();
-}
-
-function showBroadcastModal() {
-  const ov = document.createElement('div');
-  ov.className = 'modal-overlay';
-  ov.onclick = e => { if (e.target === ov) ov.remove(); };
-  ov.innerHTML = `
-    <div class="modal">
-      <h2>📢 Broadcast</h2>
-      <div class="sheet-field"><label>MESSAGE</label><input type="text" id="broadcastMsg" placeholder="Hey everyone..." /></div>
-      <div class="btn-row">
-        <button class="pixel-btn" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
-        <button class="pixel-btn success" onclick="doBroadcast()">Send</button>
-      </div>
-    </div>`;
-  document.body.appendChild(ov);
-}
-
-function doBroadcast() {
-  const msg = document.getElementById('broadcastMsg')?.value.trim();
-  if (!msg) return;
-  agents.forEach(a => { if (a.status !== 'offline') setTimeout(() => { a.say(msg, 4); a.log('Broadcast: "'+msg+'"'); }, Math.random()*1000); });
-  document.querySelector('.modal-overlay')?.remove();
-  showToast('📢 Sent!');
-}
-
-// ── TOAST & NOTIF ──
-function showToast(msg) {
-  const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 3000);
-}
-function showNotif(msg) {
-  const n = document.createElement('div');
-  n.className = 'notif-badge'; n.textContent = '✅ ' + msg;
-  document.body.appendChild(n);
-  setTimeout(() => n.remove(), 4000);
-}
+function showToast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
+function showNotif(m){const n=document.createElement('div');n.className='notif';n.textContent='✅ '+m;document.body.appendChild(n);setTimeout(()=>n.remove(),4000)}
 
 // ── GAME LOOP ──
-let lastTime = 0, frameCount = 0, fpsTime = 0;
+let lt=0,fc=0,ft=0;
+function loop(ts){
+  const dt=Math.min((ts-lt)/1000,.1);lt=ts;
+  fc++;ft+=dt;if(ft>=1){document.getElementById('bottomNav').querySelector('.nav-btn').title=fc+' FPS';fc=0;ft=0}
+  const t=ti();
+  document.getElementById('clock').textContent=`${String(t.h).padStart(2,'0')}:${String(t.m).padStart(2,'0')}`;
+  const days=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  document.getElementById('date').textContent=days[t.now.getDay()]+' '+t.now.getDate();
+  nextEv-=dt;if(nextEv<=0){trigEv();nextEv=20+Math.random()*40}
+  agents.forEach(a=>a.update(dt));
 
-function gameLoop(ts) {
-  const dt = Math.min((ts - lastTime) / 1000, 0.1);
-  lastTime = ts;
-
-  frameCount++; fpsTime += dt;
-  if (fpsTime >= 1) {
-    document.getElementById('fpsDisplay').textContent = frameCount + ' FPS';
-    frameCount = 0; fpsTime = 0;
-  }
-
-  // Clock
-  const ti = getTimeInfo();
-  document.getElementById('clockDisplay').textContent = `${String(ti.h).padStart(2,'0')}:${String(ti.m).padStart(2,'0')}`;
-  const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-  document.getElementById('dateDisplay').textContent = days[ti.now.getDay()] + ' ' + ti.now.getDate();
-
-  // Events
-  nextEventTime -= dt;
-  if (nextEventTime <= 0) { triggerRandomEvent(); nextEventTime = 20 + Math.random() * 40; }
-
-  // Update agents
-  agents.forEach(a => a.update(dt));
-
-  // Draw
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Main canvas
+  X.clearRect(0,0,C.width,C.height);
   drawOffice();
-  [...agents].sort((a,b) => a.y - b.y).forEach(a => drawAgent(a));
+  [...agents].sort((a,b)=>a.y-b.y).forEach(a=>drawAgent(a));
 
-  requestAnimationFrame(gameLoop);
+  // Minimap
+  MX.fillStyle='#16161a';MX.fillRect(0,0,130,73);
+  MX.fillStyle='rgba(88,88,104,.4)';MX.fillRect(0,FY*.2,130,73);
+  agents.forEach(a=>{
+    MX.fillStyle=a.status==='working'?'#2cb67d':a.status==='offline'?'#555':'#ff8906';
+    MX.fillRect(a.x*.2,(a.y-10)*.2,3,3)
+  });
+
+  requestAnimationFrame(loop)
 }
 
-// ── LOADING ──
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.getElementById('loadingScreen').classList.add('hide');
-    setTimeout(() => document.getElementById('loadingScreen').remove(), 500);
-  }, 800);
-});
-
-requestAnimationFrame(gameLoop);
+window.addEventListener('load',()=>{setTimeout(()=>{document.getElementById('loading').classList.add('hide');setTimeout(()=>document.getElementById('loading').remove(),500)},600)});
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
