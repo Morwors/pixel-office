@@ -11,7 +11,7 @@
 :root{--bg:#16161a;--sf:#242629;--sf2:#2e3035;--brd:#3a3d44;--tx:#fffffe;--dim:#94a1b2;--dim2:#72778a;--acc:#7f5af0;--acc2:#2cb67d;--warn:#ff8906;--err:#e53170;--bar:40px;--font:'Press Start 2P',monospace;--safe-b:env(safe-area-inset-bottom,0px)}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{background:#000;font-family:var(--font);color:var(--tx);overflow:hidden;height:100dvh;width:100vw;user-select:none;-webkit-user-select:none;touch-action:manipulation;position:fixed}
-canvas{position:fixed;top:0;left:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;touch-action:none}
+canvas{position:fixed;top:0;left:0;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;touch-action:none}
 #topBar{position:fixed;top:0;left:0;right:0;height:var(--bar);background:rgba(22,22,26,.85);backdrop-filter:blur(8px);border-bottom:1px solid rgba(58,61,68,.5);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:100}
 #topBar .logo{color:var(--acc);font-size:clamp(7px,2vw,10px);display:flex;align-items:center;gap:6px}
 #topBar .logo span{color:var(--dim)}
@@ -147,17 +147,40 @@ function initFloor(){
   floorImg=fc;
 }
 
+// Camera / viewport
+let camX=0,camY=0,camZ=1;
+let screenW=0,screenH=0,baseScale=1;
+
 function resize(){
   const w=window.innerWidth,h=window.innerHeight;
-  // Fill screen completely
-  const scaleX=w/VW,scaleY=h/VH;
-  const s=Math.max(scaleX,scaleY);
+  screenW=w;screenH=h;
+  // Fit entire office width on screen; height may overflow on portrait phones
+  baseScale=w/VW;
+  const totalH=VH*baseScale;
   cv.width=VW;cv.height=VH;
-  cv.style.width=Math.ceil(VW*s)+'px';
-  cv.style.height=Math.ceil(VH*s)+'px';
-  cv.style.left=Math.floor((w-VW*s)/2)+'px';
-  cv.style.top=Math.floor((h-VH*s)/2)+'px';
+  // Let CSS transform handle positioning (set in render)
+  cv.style.width=VW+'px';
+  cv.style.height=VH+'px';
+  cv.style.transformOrigin='0 0';
+  clampCam();
+  updateTransform();
 }
+
+function clampCam(){
+  const s=baseScale*camZ;
+  const renderedW=VW*s, renderedH=VH*s;
+  // If content fits on screen, center it; otherwise clamp panning
+  if(renderedW<=screenW){camX=(screenW-renderedW)/2}
+  else{camX=Math.min(0,Math.max(screenW-renderedW,camX))}
+  if(renderedH<=screenH){camY=(screenH-renderedH)/2}
+  else{camY=Math.min(0,Math.max(screenH-renderedH,camY))}
+}
+
+function updateTransform(){
+  const s=baseScale*camZ;
+  cv.style.transform=`translate(${camX}px,${camY}px) scale(${s})`;
+}
+
 window.addEventListener('resize',resize);
 
 // ─── Pixel helper ───
@@ -621,11 +644,9 @@ function trigEv(){const ac=agents.filter(a=>a.status!=='offline');if(!ac.length)
 // ═══════════════════════════════════════════════
 // INTERACTION
 // ═══════════════════════════════════════════════
-function canvasXY(e){
-  const r=cv.getBoundingClientRect();
-  const cx=e.touches?e.touches[0].clientX:e.clientX;
-  const cy=e.touches?e.touches[0].clientY:e.clientY;
-  return{x:(cx-r.left)/r.width*VW,y:(cy-r.top)/r.height*VH}
+function canvasXY(cx,cy){
+  const s=baseScale*camZ;
+  return{x:(cx-camX)/s,y:(cy-camY)/s}
 }
 function hitAgent(mx,my){
   for(let i=agents.length-1;i>=0;i--){
@@ -635,10 +656,72 @@ function hitAgent(mx,my){
   }
   return null
 }
-cv.addEventListener('click',e=>{const p=canvasXY(e);const a=hitAgent(p.x,p.y);if(a)openSheet(a);else closeSheet()});
-let tst=0;
-cv.addEventListener('touchstart',()=>{tst=Date.now()},{passive:true});
-cv.addEventListener('touchend',e=>{if(Date.now()-tst>500){const t=e.changedTouches[0];const r=cv.getBoundingClientRect();const a=hitAgent((t.clientX-r.left)/r.width*VW,(t.clientY-r.top)/r.height*VH);if(a)openSheet(a)}},{passive:true});
+
+// ── Touch / Mouse interaction with panning ──
+let dragStart=null,dragCamStart=null,isDragging=false,tapAgent=null;
+let pinchStartDist=0,pinchStartZoom=1;
+const TAP_THRESHOLD=8; // pixels moved to distinguish tap from drag
+
+cv.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='touch'&&e.isPrimary===false)return; // ignore second finger for pointerdown
+  dragStart={x:e.clientX,y:e.clientY};
+  dragCamStart={x:camX,y:camY};
+  isDragging=false;
+  const p=canvasXY(e.clientX,e.clientY);
+  tapAgent=hitAgent(p.x,p.y);
+},{passive:true});
+
+cv.addEventListener('pointermove',e=>{
+  if(!dragStart)return;
+  const dx=e.clientX-dragStart.x,dy=e.clientY-dragStart.y;
+  if(Math.abs(dx)>TAP_THRESHOLD||Math.abs(dy)>TAP_THRESHOLD)isDragging=true;
+  if(isDragging){
+    camX=dragCamStart.x+dx;
+    camY=dragCamStart.y+dy;
+    clampCam();updateTransform();
+  }
+},{passive:true});
+
+cv.addEventListener('pointerup',e=>{
+  if(!isDragging&&tapAgent){openSheet(tapAgent)}
+  else if(!isDragging){closeSheet()}
+  dragStart=null;tapAgent=null;
+},{passive:true});
+
+cv.addEventListener('pointercancel',()=>{dragStart=null;tapAgent=null},{passive:true});
+
+// Pinch to zoom
+cv.addEventListener('touchstart',e=>{
+  if(e.touches.length===2){
+    const dx=e.touches[0].clientX-e.touches[1].clientX;
+    const dy=e.touches[0].clientY-e.touches[1].clientY;
+    pinchStartDist=Math.sqrt(dx*dx+dy*dy);
+    pinchStartZoom=camZ;
+  }
+},{passive:true});
+cv.addEventListener('touchmove',e=>{
+  if(e.touches.length===2){
+    const dx=e.touches[0].clientX-e.touches[1].clientX;
+    const dy=e.touches[0].clientY-e.touches[1].clientY;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(pinchStartDist>0){
+      camZ=Math.max(.5,Math.min(3,pinchStartZoom*(dist/pinchStartDist)));
+      clampCam();updateTransform();
+    }
+  }
+},{passive:true});
+
+// Mouse wheel zoom
+cv.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const oldZ=camZ;
+  camZ=Math.max(.5,Math.min(3,camZ*(1-e.deltaY*.001)));
+  // Zoom toward cursor
+  const cx=e.clientX,cy=e.clientY;
+  camX=cx-(cx-camX)*(camZ/oldZ);
+  camY=cy-(cy-camY)*(camZ/oldZ);
+  clampCam();updateTransform();
+},{passive:false});
 
 // ═══════════════════════════════════════════════
 // SHEET / PANELS
