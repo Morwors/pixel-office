@@ -599,45 +599,45 @@ function drawAgent(a){
 
   // ── Name tag (on overlay at 2x for crisp text) ──
   const T=TX; // 2x scale factor
-  ox.font=`${5*T}px 'Press Start 2P',monospace`;
+  ox.font=`${3*T}px 'Press Start 2P',monospace`;
   const nm=ox.measureText(a.name);
   const nw=nm.width/T;
   const nx=x+6-nw/2;
-  const ny=by-12-(isMage?4:0);
+  const ny=by-10-(isMage?4:0);
   // Background pill
-  ox.fillStyle='rgba(16,16,22,.82)';
-  ox.beginPath();ox.roundRect((nx-3)*T,(ny-3)*T,(nw+6)*T,8*T,3*T);ox.fill();
+  ox.fillStyle='rgba(16,16,22,.80)';
+  ox.beginPath();ox.roundRect((nx-2)*T,(ny-2)*T,(nw+4)*T,6*T,2*T);ox.fill();
   // Status underline
   ox.fillStyle=a.status==='working'?'rgba(44,182,125,.7)':a.status==='offline'?'rgba(85,85,85,.5)':'rgba(255,137,6,.6)';
-  ox.fillRect((nx-3)*T,(ny+4.5)*T,(nw+6)*T,1.5*T);
+  ox.fillRect((nx-2)*T,(ny+3.5)*T,(nw+4)*T,1*T);
   // Text
   ox.fillStyle='#fff';
   ox.fillText(a.name,nx*T,(ny+2)*T);
 
   // ── Speech bubble ──
-  if(a.bubble) drawBubble(x+6,ny-6,a.bubble);
+  if(a.bubble) drawBubble(x+6,ny-5,a.bubble);
   else if(a.state==='working'&&a.task){
-    const tt=a.task.length>16?a.task.substring(0,16)+'…':a.task;
-    drawBubble(x+6,ny-6,tt);
+    const tt=a.task.length>20?a.task.substring(0,20)+'…':a.task;
+    drawBubble(x+6,ny-5,tt);
   }
 }
 
 function drawBubble(x,y,text){
   const T=TX;
-  ox.font=`${4*T}px 'Press Start 2P',monospace`;
+  ox.font=`${2.5*T}px 'Press Start 2P',monospace`;
   const m=ox.measureText(text);
-  const bw=m.width/T+8,bh=8;
+  const bw=m.width/T+6,bh=6;
   const bx=x-bw/2,by=y-bh;
   // Bubble bg
-  ox.fillStyle='rgba(36,38,41,.92)';
-  ox.beginPath();ox.roundRect(bx*T,by*T,bw*T,bh*T,3*T);ox.fill();
-  ox.strokeStyle='rgba(80,85,95,.5)';ox.lineWidth=1;ox.stroke();
+  ox.fillStyle='rgba(36,38,41,.90)';
+  ox.beginPath();ox.roundRect(bx*T,by*T,bw*T,bh*T,2*T);ox.fill();
+  ox.strokeStyle='rgba(80,85,95,.4)';ox.lineWidth=.5;ox.stroke();
   // Tail
-  ox.fillStyle='rgba(36,38,41,.92)';
-  ox.beginPath();ox.moveTo((x-2)*T,(by+bh)*T);ox.lineTo(x*T,(by+bh+2)*T);ox.lineTo((x+2)*T,(by+bh)*T);ox.fill();
+  ox.fillStyle='rgba(36,38,41,.90)';
+  ox.beginPath();ox.moveTo((x-1.5)*T,(by+bh)*T);ox.lineTo(x*T,(by+bh+1.5)*T);ox.lineTo((x+1.5)*T,(by+bh)*T);ox.fill();
   // Text
   ox.fillStyle='#ddd';
-  ox.fillText(text,(bx+4)*T,(by+5.5)*T);
+  ox.fillText(text,(bx+3)*T,(by+4)*T);
 }
 
 // ═══════════════════════════════════════════════
