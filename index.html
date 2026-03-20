@@ -12,6 +12,7 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{background:#000;font-family:var(--font);color:var(--tx);overflow:hidden;height:100dvh;width:100vw;user-select:none;-webkit-user-select:none;touch-action:manipulation;position:fixed}
 canvas{position:fixed;top:0;left:0;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;touch-action:none}
+#overlay{position:fixed;top:0;left:0;pointer-events:none;touch-action:none;z-index:1}
 #topBar{position:fixed;top:0;left:0;right:0;height:calc(var(--bar) + var(--safe-t));padding-top:var(--safe-t);background:rgba(22,22,26,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(58,61,68,.5);display:flex;align-items:center;justify-content:space-between;padding-left:16px;padding-right:16px;z-index:100}
 #topBar .logo{color:var(--acc);font-size:10px;display:flex;align-items:center;gap:8px}
 #topBar .logo span{color:var(--dim);font-size:9px}
@@ -92,6 +93,7 @@ canvas{position:fixed;top:0;left:0;image-rendering:pixelated;image-rendering:cri
 <div id="loading"><h1>🏢 AI Office</h1><p>Loading workspace...</p><div class="ldots"><span></span><span></span><span></span></div></div>
 <div id="topBar"><div class="logo">🏢 <span>Aleksa's AI Office</span></div><div class="info"><span id="clock">--:--</span><span id="date"></span></div></div>
 <canvas id="c"></canvas>
+<canvas id="overlay"></canvas>
 <div id="statusBar"></div>
 <div id="sheet"><div id="sheetGrab"></div><div id="sheetBody"></div></div>
 <div id="feedPanel"><div class="grab"></div><div id="feedBody"></div></div>
@@ -106,9 +108,11 @@ canvas{position:fixed;top:0;left:0;image-rendering:pixelated;image-rendering:cri
 // PIXEL OFFICE — Complete Rewrite v4
 // ═══════════════════════════════════════════════
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const ov=document.getElementById('overlay'),ox=ov.getContext('2d');
 
-// World is 480x270 virtual pixels, scaled to fill screen
-const VW=480,VH=270;
+// World is 480x270 virtual pixels for pixel art
+// Overlay renders at 2x (960x540) for crisp text
+const VW=480,VH=270,TX=2;
 
 // Pre-render static floor texture once
 let floorImg=null;
@@ -154,14 +158,17 @@ let screenW=0,screenH=0,baseScale=1;
 function resize(){
   const w=window.innerWidth,h=window.innerHeight;
   screenW=w;screenH=h;
-  // Fit entire office width on screen; height may overflow on portrait phones
   baseScale=w/VW;
-  const totalH=VH*baseScale;
+  // Pixel art canvas
   cv.width=VW;cv.height=VH;
-  // Let CSS transform handle positioning (set in render)
   cv.style.width=VW+'px';
   cv.style.height=VH+'px';
   cv.style.transformOrigin='0 0';
+  // Text overlay canvas at 2x resolution
+  ov.width=VW*TX;ov.height=VH*TX;
+  ov.style.width=VW+'px';
+  ov.style.height=VH+'px';
+  ov.style.transformOrigin='0 0';
   clampCam();
   updateTransform();
 }
@@ -178,7 +185,9 @@ function clampCam(){
 
 function updateTransform(){
   const s=baseScale*camZ;
-  cv.style.transform=`translate(${camX}px,${camY}px) scale(${s})`;
+  const t=`translate(${camX}px,${camY}px) scale(${s})`;
+  cv.style.transform=t;
+  ov.style.transform=t;
 }
 
 window.addEventListener('resize',resize);
@@ -586,45 +595,47 @@ function drawAgent(a){
 
   ctx.globalAlpha=1;
 
-  // ── Name tag ──
-  ctx.font="4px 'Press Start 2P',monospace";
-  const nm=ctx.measureText(a.name);
-  const nw=nm.width;
+  // ── Name tag (on overlay at 2x for crisp text) ──
+  const T=TX; // 2x scale factor
+  ox.font=`${8*T}px 'Press Start 2P',monospace`;
+  const nm=ox.measureText(a.name);
+  const nw=nm.width/T;
   const nx=x+6-nw/2;
   const ny=by-13-(isMage?4:0);
   // Background pill
-  ctx.fillStyle='rgba(16,16,22,.82)';
-  ctx.beginPath();ctx.roundRect(nx-3,ny-4,nw+6,8,3);ctx.fill();
+  ox.fillStyle='rgba(16,16,22,.85)';
+  ox.beginPath();ox.roundRect((nx-4)*T,(ny-5)*T,(nw+8)*T,12*T,4*T);ox.fill();
   // Status underline
-  ctx.fillStyle=a.status==='working'?'rgba(44,182,125,.7)':a.status==='offline'?'rgba(85,85,85,.5)':'rgba(255,137,6,.6)';
-  ctx.fillRect(nx-3,ny+4,nw+6,1);
+  ox.fillStyle=a.status==='working'?'rgba(44,182,125,.8)':a.status==='offline'?'rgba(85,85,85,.5)':'rgba(255,137,6,.7)';
+  ox.fillRect((nx-4)*T,(ny+6)*T,(nw+8)*T,2*T);
   // Text
-  ctx.fillStyle='#fff';
-  ctx.fillText(a.name,nx,ny+2);
+  ox.fillStyle='#fff';
+  ox.fillText(a.name,nx*T,(ny+3)*T);
 
   // ── Speech bubble ──
-  if(a.bubble) drawBubble(x+6,ny-6,a.bubble);
+  if(a.bubble) drawBubble(x+6,ny-8,a.bubble);
   else if(a.state==='working'&&a.task){
     const tt=a.task.length>18?a.task.substring(0,18)+'…':a.task;
-    drawBubble(x+6,ny-6,tt);
+    drawBubble(x+6,ny-8,tt);
   }
 }
 
 function drawBubble(x,y,text){
-  ctx.font="3px 'Press Start 2P',monospace";
-  const m=ctx.measureText(text);
-  const bw=m.width+8,bh=8;
+  const T=TX;
+  ox.font=`${6*T}px 'Press Start 2P',monospace`;
+  const m=ox.measureText(text);
+  const bw=m.width/T+10,bh=12;
   const bx=x-bw/2,by=y-bh;
   // Bubble bg
-  ctx.fillStyle='rgba(36,38,41,.92)';
-  ctx.beginPath();ctx.roundRect(bx,by,bw,bh,3);ctx.fill();
-  ctx.strokeStyle='rgba(58,61,68,.5)';ctx.lineWidth=.5;ctx.stroke();
+  ox.fillStyle='rgba(36,38,41,.94)';
+  ox.beginPath();ox.roundRect(bx*T,by*T,bw*T,bh*T,4*T);ox.fill();
+  ox.strokeStyle='rgba(90,95,105,.6)';ox.lineWidth=1;ox.stroke();
   // Tail
-  ctx.fillStyle='rgba(36,38,41,.92)';
-  ctx.beginPath();ctx.moveTo(x-2,by+bh);ctx.lineTo(x,by+bh+2);ctx.lineTo(x+2,by+bh);ctx.fill();
+  ox.fillStyle='rgba(36,38,41,.94)';
+  ox.beginPath();ox.moveTo((x-3)*T,(by+bh)*T);ox.lineTo(x*T,(by+bh+3)*T);ox.lineTo((x+3)*T,(by+bh)*T);ox.fill();
   // Text
-  ctx.fillStyle='#ddd';
-  ctx.fillText(text,bx+4,by+5.5);
+  ox.fillStyle='#e8e8e8';
+  ox.fillText(text,(bx+5)*T,(by+8)*T);
 }
 
 // ═══════════════════════════════════════════════
@@ -859,6 +870,7 @@ function loop(ts){
 
   // Clear & draw
   ctx.clearRect(0,0,VW,VH);
+  ox.clearRect(0,0,VW*TX,VH*TX);
   drawOffice();
   [...agents].sort((a,b)=>a.y-b.y).forEach(a=>drawAgent(a));
 
