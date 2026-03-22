@@ -4,481 +4,1403 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#0a0a0f">
 <title>Aleksa's AI Office</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
-body{background:#000;overflow:hidden;height:100dvh;width:100vw;user-select:none;-webkit-user-select:none;position:fixed;font-family:'Inter',system-ui,sans-serif;color:#fff}
+:root{--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px);--accent:#7c5cfc;--accent2:#5a3ef0;--green:#2dd4a0;--red:#f0506e;--orange:#ff9f43;--bg:#0e0e14;--card:rgba(18,18,26,.95);--card-border:rgba(255,255,255,.06);--text:rgba(255,255,255,.87);--text2:rgba(255,255,255,.5);--text3:rgba(255,255,255,.25)}
+body{background:var(--bg);overflow:hidden;height:100dvh;width:100vw;user-select:none;-webkit-user-select:none;position:fixed;font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--text)}
 canvas{position:fixed;top:0;left:0;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}
-#overlay{position:fixed;top:0;left:0;pointer-events:none;touch-action:none;z-index:1}
 
-/* ─── Minimal floating UI ─── */
-#clockChip{position:fixed;top:calc(8px + var(--safe-t));right:10px;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:5px 10px;border-radius:12px;font-family:'Press Start 2P',monospace;font-size:8px;color:rgba(255,255,255,.7);z-index:50;pointer-events:none}
+/* ─── Top bar ─── */
+#topBar{position:fixed;top:0;left:0;right:0;height:calc(44px + var(--safe-t));padding-top:var(--safe-t);display:flex;align-items:center;justify-content:space-between;padding-left:16px;padding-right:16px;z-index:50;pointer-events:none;background:linear-gradient(to bottom,rgba(10,10,15,.85) 0%,rgba(10,10,15,.4) 70%,transparent 100%)}
+#topBar>*{pointer-events:auto}
+.top-left{display:flex;align-items:center;gap:10px}
+.top-title{font-family:'Press Start 2P',monospace;font-size:9px;color:rgba(255,255,255,.6);letter-spacing:1px}
+.top-clock{font-family:'Press Start 2P',monospace;font-size:8px;color:rgba(255,255,255,.4);padding:4px 10px;background:rgba(255,255,255,.06);border-radius:8px;border:1px solid var(--card-border)}
+.top-right{display:flex;align-items:center;gap:8px}
+.top-btn{width:32px;height:32px;border-radius:10px;border:1px solid var(--card-border);background:rgba(255,255,255,.04);color:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .15s}
+.top-btn:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7)}
+.top-btn:active{transform:scale(.92)}
+.top-btn.accent{background:rgba(124,92,252,.15);border-color:rgba(124,92,252,.25);color:var(--accent)}
 
-/* Agent dots — bottom left */
-#agentDots{position:fixed;bottom:calc(12px + var(--safe-b));left:10px;display:flex;gap:6px;z-index:50}
-.adot{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;transition:transform .15s,border-color .2s;position:relative}
-.adot:active{transform:scale(.9)}
-.adot.working{border-color:rgba(44,182,125,.6);box-shadow:0 0 8px rgba(44,182,125,.3)}
-.adot.idle{border-color:rgba(255,137,6,.5)}
-.adot.offline{opacity:.4}
-.adot::after{content:'';position:absolute;bottom:-2px;right:-2px;width:8px;height:8px;border-radius:50%;border:1.5px solid #000}
-.adot.working::after{background:#2cb67d}
-.adot.idle::after{background:#ff8906}
-.adot.offline::after{background:#555}
+/* ─── Agent bar (bottom) ─── */
+#agentBar{position:fixed;bottom:calc(12px + var(--safe-b));left:50%;transform:translateX(-50%);display:flex;gap:4px;padding:4px;background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--card-border);border-radius:16px;z-index:50;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.agent-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:12px;cursor:pointer;transition:all .15s;position:relative;white-space:nowrap}
+.agent-chip:hover{background:rgba(255,255,255,.06)}
+.agent-chip:active{transform:scale(.96)}
+.agent-chip.sel{background:rgba(124,92,252,.12)}
+.chip-avatar{width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.chip-info{display:flex;flex-direction:column;gap:1px}
+.chip-name{font-size:10px;font-weight:600;color:var(--text)}
+.chip-status{font-size:8px;font-weight:500}
+.chip-status.working{color:var(--green)}
+.chip-status.idle{color:var(--orange)}
+.chip-status.offline{color:var(--text3)}
+.chip-dot{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;border:1.5px solid var(--bg)}
+.chip-dot.working{background:var(--green)}
+.chip-dot.idle{background:var(--orange)}
+.chip-dot.offline{background:rgba(255,255,255,.15)}
 
-/* FAB — bottom right */
-#fab{position:fixed;bottom:calc(12px + var(--safe-b));right:10px;width:40px;height:40px;border-radius:50%;background:rgba(127,90,240,.85);border:none;color:#fff;font-size:20px;cursor:pointer;z-index:50;display:flex;align-items:center;justify-content:center;transition:transform .15s;box-shadow:0 2px 12px rgba(127,90,240,.3)}
-#fab:active{transform:scale(.9)}
+/* ─── Side panel ─── */
+#panel{position:fixed;top:calc(52px + var(--safe-t));right:12px;width:320px;max-height:calc(100dvh - 120px - var(--safe-t) - var(--safe-b));background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--card-border);border-radius:16px;z-index:100;overflow:hidden;display:flex;flex-direction:column;opacity:0;transform:translateX(10px) scale(.98);pointer-events:none;transition:all .2s cubic-bezier(.4,0,.2,1);box-shadow:0 8px 40px rgba(0,0,0,.5)}
+#panel.open{opacity:1;transform:translateX(0) scale(1);pointer-events:auto}
+#panelBody{padding:16px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
 
-/* Bottom sheet */
-#sheet{position:fixed;left:0;right:0;bottom:0;max-height:80dvh;background:#1a1a1e;border-top:1px solid rgba(255,255,255,.08);border-radius:20px 20px 0 0;z-index:200;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;padding-bottom:var(--safe-b)}
-#sheet.open{transform:translateY(0)}
-.sheet-handle{padding:12px;display:flex;justify-content:center;flex-shrink:0}
-.sheet-handle::after{content:'';width:32px;height:4px;background:rgba(255,255,255,.15);border-radius:2px}
-#sheetBody{padding:0 20px 24px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+/* Panel content */
+.p-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.p-avatar{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.p-name{font-weight:600;font-size:14px;margin-bottom:2px}
+.p-role{font-size:11px;color:var(--text2)}
+.p-close{width:28px;height:28px;border-radius:8px;border:1px solid var(--card-border);background:rgba(255,255,255,.04);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;margin-left:auto;transition:all .12s}
+.p-close:hover{background:rgba(255,255,255,.08)}
 
-/* Agent detail */
-.ag-header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
-.ag-avatar{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
-.ag-name{font-weight:600;font-size:15px;margin-bottom:2px}
-.ag-role{font-size:12px;color:rgba(255,255,255,.45)}
-.ag-status{display:inline-block;font-size:10px;font-weight:500;padding:3px 10px;border-radius:8px;margin-bottom:12px}
-.ag-status.working{background:rgba(44,182,125,.12);color:#2cb67d}
-.ag-status.idle{background:rgba(255,137,6,.1);color:#ff8906}
-.ag-status.offline{background:rgba(255,255,255,.05);color:rgba(255,255,255,.3)}
-.ag-task{font-size:12px;color:rgba(255,255,255,.55);padding:10px 12px;background:rgba(255,255,255,.04);border-radius:10px;margin-bottom:14px;border-left:3px solid #2cb67d}
-.ag-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.abtn{font-family:'Inter',sans-serif;font-size:12px;font-weight:500;padding:12px;background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.08);cursor:pointer;border-radius:10px;text-align:center;transition:background .12s}
-.abtn:active{background:rgba(255,255,255,.12)}
-.abtn.accent{background:rgba(127,90,240,.15);border-color:rgba(127,90,240,.25);color:#b794f6}
-.abtn.danger{background:rgba(229,49,112,.1);border-color:rgba(229,49,112,.15);color:#e53170}
-.abtn.green{background:rgba(44,182,125,.12);border-color:rgba(44,182,125,.2);color:#2cb67d}
-.abtn.full{grid-column:1/-1}
-.ag-input{width:100%;padding:12px;font-family:'Inter',sans-serif;font-size:13px;background:rgba(255,255,255,.04);color:#fff;border:1px solid rgba(255,255,255,.08);border-radius:10px;outline:none;margin-bottom:8px;transition:border-color .2s}
-.ag-input:focus{border-color:rgba(127,90,240,.5)}
-.ag-input::placeholder{color:rgba(255,255,255,.25)}
-.ag-label{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;font-weight:500}
-.ag-log{margin-top:14px}
-.ag-log h4{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;font-weight:500}
-.ag-log-list{max-height:120px;overflow-y:auto}
-.ag-log-item{font-size:11px;color:rgba(255,255,255,.4);padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);line-height:1.5}
-.ag-log-item .time{color:rgba(255,255,255,.2);font-size:10px}
+.p-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:600;padding:3px 10px;border-radius:6px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.p-badge.working{background:rgba(45,212,160,.1);color:var(--green);border:1px solid rgba(45,212,160,.15)}
+.p-badge.idle{background:rgba(255,159,67,.08);color:var(--orange);border:1px solid rgba(255,159,67,.12)}
+.p-badge.offline{background:rgba(255,255,255,.03);color:var(--text3);border:1px solid var(--card-border)}
+.p-badge::before{content:'';width:5px;height:5px;border-radius:50%}
+.p-badge.working::before{background:var(--green)}
+.p-badge.idle::before{background:var(--orange)}
+.p-badge.offline::before{background:var(--text3)}
 
-/* Menu sheet */
-.menu-title{font-size:14px;font-weight:600;margin-bottom:16px;color:rgba(255,255,255,.85)}
-.menu-item{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:opacity .12s}
-.menu-item:active{opacity:.6}
-.menu-item .mi-icon{font-size:18px;width:28px;text-align:center}
-.menu-item .mi-text{font-size:13px;color:rgba(255,255,255,.7)}
+.p-task-card{padding:10px 12px;background:rgba(45,212,160,.04);border:1px solid rgba(45,212,160,.1);border-radius:10px;margin-bottom:14px;font-size:11px;color:rgba(45,212,160,.9);display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.p-task-card .task-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.p-task-card .task-progress{margin-top:6px;height:3px;background:rgba(45,212,160,.1);border-radius:2px;overflow:hidden}
+.p-task-card .task-progress-bar{height:100%;background:var(--green);border-radius:2px;transition:width .5s}
 
-/* Add modal */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:flex;align-items:flex-end;justify-content:center;animation:fadein .15s ease}
-@keyframes fadein{from{opacity:0}}
-.modal-card{background:#1a1a1e;border-radius:20px 20px 0 0;padding:24px 20px calc(24px + var(--safe-b));width:100%;max-width:440px;animation:slideup .2s ease}
-@keyframes slideup{from{transform:translateY(20px);opacity:.5}}
-.modal-card h2{font-size:15px;font-weight:600;margin-bottom:18px}
-.modal-card .btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
-.color-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-.csw{width:32px;height:32px;border:2px solid rgba(255,255,255,.1);border-radius:8px;cursor:pointer;transition:transform .1s}
-.csw.sel{border-color:#7f5af0;box-shadow:0 0 10px rgba(127,90,240,.35);transform:scale(1.1)}
+.p-section{margin-bottom:14px}
+.p-label{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.p-input{width:100%;padding:10px 12px;font-family:'Inter',sans-serif;font-size:12px;background:rgba(255,255,255,.03);color:var(--text);border:1px solid var(--card-border);border-radius:10px;outline:none;transition:border-color .2s}
+.p-input:focus{border-color:rgba(124,92,252,.4)}
+.p-input::placeholder{color:var(--text3)}
+.p-input-row{display:flex;gap:6px}
+.p-input-row .p-input{flex:1}
 
-/* Toast */
-.toast{position:fixed;top:calc(12px + var(--safe-t));left:50%;transform:translateX(-50%);background:rgba(30,30,34,.92);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);padding:8px 16px;font-size:12px;font-family:'Inter',sans-serif;color:#fff;z-index:400;border-radius:10px;animation:fadein .2s ease,fadeout .3s ease 2.7s forwards;pointer-events:none}
-@keyframes fadeout{to{opacity:0;transform:translateX(-50%) translateY(-6px)}}
+.p-btn{font-family:'Inter',sans-serif;font-size:11px;font-weight:500;padding:8px 14px;border:1px solid var(--card-border);border-radius:8px;cursor:pointer;transition:all .12s;background:rgba(255,255,255,.04);color:var(--text2);white-space:nowrap}
+.p-btn:hover{background:rgba(255,255,255,.08)}
+.p-btn:active{transform:scale(.97)}
+.p-btn.accent{background:rgba(124,92,252,.12);border-color:rgba(124,92,252,.2);color:#b3a0ff}
+.p-btn.green{background:rgba(45,212,160,.1);border-color:rgba(45,212,160,.15);color:var(--green)}
+.p-btn.red{background:rgba(240,80,110,.08);border-color:rgba(240,80,110,.12);color:var(--red)}
+.p-btn.full{width:100%}
+.p-btn.sm{padding:6px 10px;font-size:10px}
 
-/* Loading */
-#loading{position:fixed;inset:0;background:#000;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s}
+.p-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+
+.p-log{margin-top:6px}
+.p-log-item{font-size:10px;color:var(--text2);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03);line-height:1.5;display:flex;gap:8px}
+.p-log-item .log-time{color:var(--text3);font-size:9px;font-family:'Press Start 2P',monospace;flex-shrink:0;margin-top:1px}
+
+/* ─── Menu panel ─── */
+.menu-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:opacity .12s}
+.menu-item:last-child{border:none}
+.menu-item:hover{opacity:.8}
+.menu-item:active{opacity:.5}
+.menu-item .m-icon{font-size:16px;width:24px;text-align:center}
+.menu-item .m-text{font-size:12px;color:var(--text2)}
+
+/* ─── Modal ─── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:300;display:flex;align-items:center;justify-content:center;animation:mfadein .15s ease}
+@keyframes mfadein{from{opacity:0}}
+.modal-card{background:#16161e;border:1px solid var(--card-border);border-radius:16px;padding:24px;width:90%;max-width:380px;animation:mslideup .2s ease;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+@keyframes mslideup{from{transform:translateY(10px);opacity:.5}}
+.modal-card h2{font-size:14px;font-weight:600;margin-bottom:16px}
+.modal-card .btn-row{display:flex;gap:6px;justify-content:flex-end;margin-top:16px}
+.color-row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.csw{width:28px;height:28px;border:2px solid rgba(255,255,255,.08);border-radius:8px;cursor:pointer;transition:all .1s}
+.csw:hover{transform:scale(1.05)}
+.csw.sel{border-color:var(--accent);box-shadow:0 0 12px rgba(124,92,252,.3);transform:scale(1.1)}
+
+/* ─── Toast ─── */
+.toast{position:fixed;top:calc(52px + var(--safe-t));left:50%;transform:translateX(-50%);background:var(--card);backdrop-filter:blur(12px);border:1px solid var(--card-border);padding:8px 16px;font-size:11px;font-family:'Inter',sans-serif;color:var(--text);z-index:400;border-radius:10px;animation:mfadein .2s ease,tfadeout .3s ease 2.7s forwards;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+@keyframes tfadeout{to{opacity:0;transform:translateX(-50%) translateY(-6px)}}
+
+/* ─── Loading ─── */
+#loading{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .5s}
 #loading.hide{opacity:0;pointer-events:none}
-#loading h1{font-size:14px;font-weight:600;color:rgba(255,255,255,.85)}
-#loading p{font-size:11px;color:rgba(255,255,255,.35)}
-.ldots{display:flex;gap:6px}
-.ldots span{width:8px;height:8px;background:#7f5af0;border-radius:2px;animation:bounce 1s infinite ease-in-out}
+#loading h1{font-family:'Press Start 2P',monospace;font-size:12px;color:rgba(255,255,255,.8);letter-spacing:1px}
+#loading p{font-size:11px;color:var(--text3)}
+.ldots{display:flex;gap:4px}
+.ldots span{width:6px;height:6px;background:var(--accent);border-radius:2px;animation:bounce 1s infinite ease-in-out}
 .ldots span:nth-child(2){animation-delay:.12s}
 .ldots span:nth-child(3){animation-delay:.24s}
 @keyframes bounce{0%,80%,100%{transform:scaleY(.4)}40%{transform:scaleY(1)}}
 
-@media(min-width:769px){#sheet{max-width:380px;right:10px;left:auto}.modal-card{border-radius:16px;margin-bottom:20px}}
+/* ─── Responsive ─── */
+@media(max-width:640px){
+  #panel{top:auto;bottom:0;right:0;left:0;width:100%;max-height:65dvh;border-radius:20px 20px 0 0;transform:translateY(10px);padding-bottom:var(--safe-b)}
+  #panel.open{transform:translateY(0)}
+  #agentBar{max-width:calc(100vw - 24px);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #agentBar::-webkit-scrollbar{display:none}
+  .chip-info{display:none}
+  .agent-chip{padding:6px 8px}
+}
+@media(min-width:641px) and (max-width:900px){
+  #panel{width:280px}
+}
 </style>
 </head>
 <body>
-<div id="loading"><h1>🏢 AI Office</h1><p>Loading workspace...</p><div class="ldots"><span></span><span></span><span></span></div></div>
+<div id="loading"><h1>🏢 AI OFFICE</h1><p>Booting workspace...</p><div class="ldots"><span></span><span></span><span></span></div></div>
 <canvas id="c"></canvas>
-<canvas id="overlay"></canvas>
-<div id="clockChip"><span id="clock">--:--</span></div>
-<div id="agentDots"></div>
-<button id="fab" onclick="toggleMenu()">☰</button>
-<div id="sheet"><div class="sheet-handle"></div><div id="sheetBody"></div></div>
+
+<!-- Top bar -->
+<div id="topBar">
+  <div class="top-left">
+    <span class="top-title">AI OFFICE</span>
+    <span class="top-clock" id="clock">--:--</span>
+  </div>
+  <div class="top-right">
+    <div class="top-btn" onclick="toggleMenu()" title="Menu">☰</div>
+  </div>
+</div>
+
+<!-- Agent bar -->
+<div id="agentBar"></div>
+
+<!-- Side panel -->
+<div id="panel"><div id="panelBody"></div></div>
+
 <script>
-const cv=document.getElementById('c'),ctx=cv.getContext('2d');
-const ovl=document.getElementById('overlay'),ox=ovl.getContext('2d');
-const VW=480,VH=270,TX=2;
+// ═══════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════
+const VW = 480, VH = 270;
+const WALL_TOP = 10, WALL_BOT = 95, WALK_Y_MIN = 130, WALK_Y_MAX = 250;
 
-// ─── Floor texture (pre-rendered once) ───
-let floorImg=null;
-function initFloor(){
-  const fc=document.createElement('canvas');fc.width=VW;fc.height=VH;
-  const fx=fc.getContext('2d');
-  const fy0=95;
-  for(let py=fy0;py<VH;py++){for(let px=0;px<VW;px++){
-    const row=Math.floor((py-fy0)/8),offset=(row%2)*12;
-    const plankInRow=Math.floor((px+offset)/24);
-    const isGap=((px+offset)%24===0)||((py-fy0)%8===0);
-    if(isGap){fx.fillStyle='#5a4a35'}
-    else{const seed=(plankInRow*7+row*13)%5;
-      const bases=['#b89468','#c4a070','#a88858','#bfa06a','#c8a878'];
-      const noise=((px*13+py*7)%11-5)*2;
-      const r=parseInt(bases[seed].slice(1,3),16)+noise;
-      const g=parseInt(bases[seed].slice(3,5),16)+noise;
-      const b=parseInt(bases[seed].slice(5,7),16)+noise;
-      fx.fillStyle=`rgb(${Math.max(0,Math.min(255,r))},${Math.max(0,Math.min(255,g))},${Math.max(0,Math.min(255,b))})`}
-    fx.fillRect(px,py,1,1);
-  }}
-  floorImg=fc;
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+
+// ═══════════════════════════════════════════════════════
+// CAMERA
+// ═══════════════════════════════════════════════════════
+let camX = 0, camY = 0, camZ = 1, screenW = 0, screenH = 0, baseScale = 1;
+
+function resize() {
+  screenW = window.innerWidth;
+  screenH = window.innerHeight;
+  baseScale = Math.max(screenW / VW, screenH / VH);
+  cv.width = VW; cv.height = VH;
+  cv.style.transformOrigin = '0 0';
+  clampCam(); applyTransform();
 }
 
-// ─── Camera ───
-let camX=0,camY=0,camZ=1,screenW=0,screenH=0,baseScale=1;
-function resize(){
-  screenW=window.innerWidth;screenH=window.innerHeight;
-  baseScale=Math.max(screenW/VW,screenH/VH);
-  cv.width=VW;cv.height=VH;
-  cv.style.width=cv.style.height=ovl.style.width=ovl.style.height='';
-  ovl.width=VW*TX;ovl.height=VH*TX;
-  cv.style.transformOrigin=ovl.style.transformOrigin='0 0';
-  clampCam();applyTransform();
+function clampCam() {
+  const s = baseScale * camZ;
+  const rw = VW * s, rh = VH * s;
+  camX = rw <= screenW ? (screenW - rw) / 2 : Math.min(0, Math.max(screenW - rw, camX));
+  camY = rh <= screenH ? (screenH - rh) / 2 : Math.min(0, Math.max(screenH - rh, camY));
 }
-function clampCam(){
-  const s=baseScale*camZ,rw=VW*s,rh=VH*s;
-  camX=rw<=screenW?(screenW-rw)/2:Math.min(0,Math.max(screenW-rw,camX));
-  camY=rh<=screenH?(screenH-rh)/2:Math.min(0,Math.max(screenH-rh,camY));
+
+function applyTransform() {
+  cv.style.transform = `translate(${camX}px,${camY}px) scale(${baseScale * camZ})`;
 }
-function applyTransform(){
-  const s=baseScale*camZ;
-  const t=`translate(${camX}px,${camY}px) scale(${s})`;
-  cv.style.transform=t;ovl.style.transform=t;
+
+window.addEventListener('resize', resize);
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+function px(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
+
+function getTime() {
+  const n = new Date();
+  return { h: n.getHours(), m: n.getMinutes(), s: n.getSeconds() };
 }
-window.addEventListener('resize',resize);
 
-// ─── Helpers ───
-function px(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h)}
-function getTime(){const n=new Date();return{h:n.getHours(),m:n.getMinutes(),s:n.getSeconds(),d:n}}
-function daylight(){const h=getTime().h;if(h>=7&&h<17)return 1;if(h>=6&&h<7)return .6+.4*(h-6);if(h>=17&&h<20)return .6+.4*(1-(h-17)/3);return .55}
-function tint(hex,L){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgb(${r*L|0},${g*L|0},${b*L|0})`}
+function daylight() {
+  const h = getTime().h + getTime().m / 60;
+  if (h >= 7 && h < 17) return 1;
+  if (h >= 6 && h < 7) return .55 + .45 * (h - 6);
+  if (h >= 17 && h < 20) return .55 + .45 * (1 - (h - 17) / 3);
+  return .55;
+}
 
-const WALL_TOP=10,WALL_BOT=95,WALK_Y=160;
+function tint(hex, L) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgb(${r * L | 0},${g * L | 0},${b * L | 0})`;
+}
 
-// ═══════════════════════════════════════════════
+function lerpColor(hex1, hex2, t) {
+  const r1 = parseInt(hex1.slice(1, 3), 16), g1 = parseInt(hex1.slice(3, 5), 16), b1 = parseInt(hex1.slice(5, 7), 16);
+  const r2 = parseInt(hex2.slice(1, 3), 16), g2 = parseInt(hex2.slice(3, 5), 16), b2 = parseInt(hex2.slice(5, 7), 16);
+  return `rgb(${r1 + (r2 - r1) * t | 0},${g1 + (g2 - g1) * t | 0},${b1 + (b2 - b1) * t | 0})`;
+}
+
+// ═══════════════════════════════════════════════════════
+// PRE-RENDERED FLOOR
+// ═══════════════════════════════════════════════════════
+let floorImg = null;
+function initFloor() {
+  const fc = document.createElement('canvas');
+  fc.width = VW; fc.height = VH;
+  const fx = fc.getContext('2d');
+  const fy0 = WALL_BOT;
+  for (let py = fy0; py < VH; py++) {
+    for (let px = 0; px < VW; px++) {
+      const row = Math.floor((py - fy0) / 8);
+      const offset = (row % 2) * 14;
+      const plankInRow = Math.floor((px + offset) / 28);
+      const localX = (px + offset) % 28;
+      const localY = (py - fy0) % 8;
+      const isGapX = localX === 0;
+      const isGapY = localY === 0;
+      if (isGapX || isGapY) {
+        fx.fillStyle = '#5a4a38';
+      } else {
+        const seed = (plankInRow * 7 + row * 13) % 5;
+        const bases = ['#c49b6e', '#d4a876', '#b8905e', '#cca56c', '#d8b080'];
+        const grain = Math.sin(px * 0.8 + seed * 40) * 3 + Math.sin(py * 0.3) * 2;
+        const r = parseInt(bases[seed].slice(1, 3), 16) + grain;
+        const g = parseInt(bases[seed].slice(3, 5), 16) + grain;
+        const b = parseInt(bases[seed].slice(5, 7), 16) + grain;
+        fx.fillStyle = `rgb(${Math.max(0, Math.min(255, r | 0))},${Math.max(0, Math.min(255, g | 0))},${Math.max(0, Math.min(255, b | 0))})`;
+      }
+      fx.fillRect(px, py, 1, 1);
+    }
+  }
+  floorImg = fc;
+}
+
+// ═══════════════════════════════════════════════════════
 // DRAW OFFICE
-// ═══════════════════════════════════════════════
-function drawOffice(){
-  const L=daylight();
-  const skyHi=L>.5?'#4a80c8':'#0e0e20',skyLo=L>.5?'#88c0e8':'#1a1a30';
+// ═══════════════════════════════════════════════════════
+function drawOffice() {
+  const L = daylight();
+  const isDay = L > 0.7;
+  const skyHi = isDay ? '#5a90d0' : '#0c0c1e';
+  const skyLo = isDay ? '#98c8f0' : '#181830';
 
-  // Ceiling
-  px(0,0,VW,WALL_TOP,tint('#e0dcd4',L));
-  px(0,WALL_TOP-1,VW,1,tint('#c8c0b0',L));
-  for(let lx=40;lx<VW;lx+=100){px(lx,WALL_TOP-4,40,3,tint('#f8f4e8',L));px(lx+2,WALL_TOP-5,36,2,tint('#fffef0',L));if(L>.3){ctx.fillStyle=`rgba(255,245,210,${.06*L})`;ctx.fillRect(lx-5,WALL_TOP,50,WALL_BOT-WALL_TOP)}}
+  // === CEILING ===
+  px(0, 0, VW, WALL_TOP, tint('#e8e4dc', L));
+  px(0, WALL_TOP - 1, VW, 1, tint('#d0c8b8', L));
 
-  // Wall
-  px(0,WALL_TOP,VW,WALL_BOT-WALL_TOP,tint('#d8d0c0',L));
-  px(0,WALL_BOT-18,VW,18,tint('#c8c0a8',L));
-  px(0,WALL_BOT-18,VW,1,tint('#b8b098',L));
-  px(0,WALL_BOT-2,VW,2,tint('#8a7a58',L));
+  // Ceiling lights
+  for (let lx = 60; lx < VW; lx += 120) {
+    px(lx, WALL_TOP - 3, 50, 2, tint('#e0dcd0', L));
+    px(lx + 2, WALL_TOP - 4, 46, 2, tint('#f4f0e4', L));
+    // Light glow
+    if (L < 0.8 || true) {
+      px(lx + 4, WALL_TOP - 5, 42, 2, '#fffef4');
+      ctx.fillStyle = `rgba(255,250,230,${0.03 * (2 - L)})`;
+      ctx.fillRect(lx - 10, WALL_TOP, 70, WALL_BOT - WALL_TOP);
+    }
+  }
 
-  // Windows
-  [55,155,280,390].forEach(wx=>{
-    const ww=50,wh=50,wy=WALL_TOP+6;
-    px(wx-2,wy-2,ww+4,wh+4,tint('#706040',L));px(wx-1,wy-1,ww+2,wh+2,tint('#887860',L));
-    for(let i=0;i<wh;i++){const t=i/wh;const r1=parseInt(skyHi.slice(1,3),16),g1=parseInt(skyHi.slice(3,5),16),b1=parseInt(skyHi.slice(5,7),16);const r2=parseInt(skyLo.slice(1,3),16),g2=parseInt(skyLo.slice(3,5),16),b2=parseInt(skyLo.slice(5,7),16);ctx.fillStyle=`rgb(${r1+(r2-r1)*t|0},${g1+(g2-g1)*t|0},${b1+(b2-b1)*t|0})`;ctx.fillRect(wx,wy+i,ww,1)}
-    px(wx+ww/2-1,wy,2,wh,tint('#887860',L));px(wx,wy+wh/2-1,ww,2,tint('#887860',L));
-    px(wx-3,wy+wh+1,ww+6,3,tint('#a09070',L));
-    if(L<.6){px(wx+8,wy+10,1,1,'#fff');px(wx+30,wy+6,1,1,'#fff');px(wx+18,wy+20,1,1,'#ddd');px(wx+40,wy+15,1,1,'#eee')}
+  // === WALL ===
+  // Main wall - subtle gradient
+  for (let wy = WALL_TOP; wy < WALL_BOT; wy++) {
+    const t = (wy - WALL_TOP) / (WALL_BOT - WALL_TOP);
+    px(0, wy, VW, 1, tint(lerpColor('#dcd4c4', '#d0c8b4', t), L));
+  }
+  // Wainscoting (lower wall panel)
+  px(0, WALL_BOT - 20, VW, 20, tint('#c8c0a8', L));
+  px(0, WALL_BOT - 20, VW, 1, tint('#b8b098', L));
+  // Baseboard
+  px(0, WALL_BOT - 2, VW, 3, tint('#8a7a58', L));
+
+  // === WINDOWS ===
+  const windowPositions = [50, 160, 285, 395];
+  windowPositions.forEach(wx => {
+    const ww = 52, wh = 48, wy = WALL_TOP + 8;
+    // Window frame
+    px(wx - 3, wy - 3, ww + 6, wh + 6, tint('#807050', L));
+    px(wx - 2, wy - 2, ww + 4, wh + 4, tint('#988868', L));
+    px(wx - 1, wy - 1, ww + 2, wh + 2, tint('#a89878', L));
+    // Sky gradient
+    for (let i = 0; i < wh; i++) {
+      const t = i / wh;
+      px(wx, wy + i, ww, 1, lerpColor(skyHi, skyLo, t));
+    }
+    // Window mullions
+    px(wx + ww / 2 - 1, wy, 2, wh, tint('#988868', L));
+    px(wx, wy + wh / 2 - 1, ww, 2, tint('#988868', L));
+    // Window sill
+    px(wx - 4, wy + wh + 1, ww + 8, 3, tint('#a89878', L));
+    px(wx - 3, wy + wh + 4, ww + 6, 1, tint('#988868', L));
+    // Stars at night
+    if (!isDay) {
+      const stars = [[8, 8], [30, 5], [18, 18], [40, 12], [12, 30], [35, 25]];
+      stars.forEach(([sx, sy]) => {
+        const bright = Math.sin(Date.now() / 1000 + sx * sy) * 0.3 + 0.7;
+        ctx.fillStyle = `rgba(255,255,255,${bright * 0.7})`;
+        ctx.fillRect(wx + sx, wy + sy, 1, 1);
+      });
+    }
+    // Daylight reflection
+    if (isDay) {
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.fillRect(wx + 2, wy + 2, 8, 12);
+    }
   });
 
-  // Wall decorations
-  px(120,WALL_TOP+4,42,28,tint('#c8c8c8',L));px(121,WALL_TOP+5,40,26,tint('#f4f4f4',L));
-  px(124,WALL_TOP+9,14,1,tint('#4060c0',L));px(124,WALL_TOP+12,20,1,tint('#c04040',L));
-  px(124,WALL_TOP+15,9,1,tint('#40a040',L));px(124,WALL_TOP+18,16,1,tint('#c0a020',L));
-  px(143,WALL_TOP+8,7,5,tint('#fff480',L));px(152,WALL_TOP+10,7,5,tint('#80d0ff',L));
-  px(255,WALL_TOP+6,12,12,tint('#e0e0e0',L));px(256,WALL_TOP+7,10,10,tint('#f8f8f8',L));px(260,WALL_TOP+11,2,2,tint('#333',L));
-  px(340,WALL_TOP+6,28,20,tint('#3a3020',L));px(341,WALL_TOP+7,26,18,tint('#1a2a40',L));
-  px(343,WALL_TOP+16,22,7,tint('#2a6030',L));px(343,WALL_TOP+9,22,7,tint('#4080c0',L));px(350,WALL_TOP+13,5,10,tint('#206020',L));px(360,WALL_TOP+15,4,8,tint('#206020',L));
+  // === WALL DECORATIONS ===
 
-  // Floor
-  if(floorImg){ctx.drawImage(floorImg,0,0);if(L<.95){ctx.fillStyle=`rgba(0,0,0,${1-L})`;ctx.fillRect(0,WALL_BOT,VW,VH-WALL_BOT)}}
-  ctx.fillStyle='rgba(0,0,0,.15)';ctx.fillRect(0,WALL_BOT,VW,4);
+  // Whiteboard (between windows 1&2)
+  const wbx = 112, wby = WALL_TOP + 6;
+  px(wbx, wby, 44, 30, tint('#d0d0d0', L));
+  px(wbx + 1, wby + 1, 42, 28, tint('#f6f6f6', L));
+  // Whiteboard content
+  px(wbx + 4, wby + 5, 16, 1, tint('#4060c0', L));
+  px(wbx + 4, wby + 8, 24, 1, tint('#c04040', L));
+  px(wbx + 4, wby + 11, 12, 1, tint('#40a040', L));
+  px(wbx + 4, wby + 14, 20, 1, tint('#c0a020', L));
+  // Sticky notes on whiteboard
+  px(wbx + 30, wby + 4, 8, 7, tint('#fff480', L));
+  px(wbx + 30, wby + 14, 8, 7, tint('#80d0ff', L));
+  px(wbx + 22, wby + 18, 8, 7, tint('#ff9090', L));
+  // Whiteboard markers tray
+  px(wbx + 5, wby + 28, 20, 2, tint('#c0c0c0', L));
+  px(wbx + 7, wby + 26, 3, 2, tint('#e04040', L));
+  px(wbx + 12, wby + 26, 3, 2, tint('#4040e0', L));
+  px(wbx + 17, wby + 26, 3, 2, tint('#40a040', L));
 
-  // Door
-  px(6,WALL_TOP+20,16,WALL_BOT-WALL_TOP-20,tint('#7a5030',L));px(7,WALL_TOP+21,14,WALL_BOT-WALL_TOP-22,tint('#9a6840',L));
-  px(18,WALL_TOP+50,2,3,tint('#d0a040',L));px(6,WALL_BOT+1,18,3,tint('#408040',L));
+  // Wall clock (between windows 2&3)
+  const clkx = 230, clky = WALL_TOP + 12;
+  px(clkx, clky, 14, 14, tint('#e8e4dc', L));
+  px(clkx + 1, clky + 1, 12, 12, tint('#faf8f4', L));
+  // Clock hands
+  const t = getTime();
+  const hAngle = (t.h % 12 + t.m / 60) / 12 * Math.PI * 2 - Math.PI / 2;
+  const mAngle = t.m / 60 * Math.PI * 2 - Math.PI / 2;
+  const cx = clkx + 7, cy = clky + 7;
+  // Hour hand
+  px(cx + Math.cos(hAngle) * 2 | 0, cy + Math.sin(hAngle) * 2 | 0, 2, 2, tint('#333', L));
+  // Minute hand
+  px(cx + Math.cos(mAngle) * 3 | 0, cy + Math.sin(mAngle) * 3 | 0, 1, 1, tint('#666', L));
+  px(cx, cy, 2, 2, tint('#c04040', L)); // center dot
 
-  // Desks
-  drawDesk(45,WALL_BOT+8);drawDesk(130,WALL_BOT+8);drawDesk(240,WALL_BOT+8);drawDesk(370,WALL_BOT+8);
+  // Framed art (between windows 3&4)
+  const fax = 345, fay = WALL_TOP + 8;
+  px(fax, fay, 30, 22, tint('#4a3820', L));
+  px(fax + 1, fay + 1, 28, 20, tint('#3a2818', L));
+  px(fax + 2, fay + 2, 26, 18, tint('#1a2a40', L));
+  // Landscape painting
+  px(fax + 2, fay + 12, 26, 8, tint('#2a6030', L)); // ground
+  px(fax + 2, fay + 2, 26, 10, tint('#4080c0', L)); // sky
+  px(fax + 8, fay + 8, 8, 12, tint('#206020', L)); // tree
+  px(fax + 18, fay + 10, 6, 10, tint('#308030', L)); // tree2
+  px(fax + 4, fay + 4, 3, 3, tint('#f0e040', L)); // sun
 
-  // Meeting
-  px(420,WALL_BOT+5,50,22,tint('#706050',L));px(421,WALL_BOT+6,48,20,tint('#887460',L));
-  [423,438,455].forEach(cx=>{px(cx,WALL_BOT+1,10,4,tint('#4a4a6a',L));px(cx,WALL_BOT+27,10,4,tint('#4a4a6a',L))});
+  // === FLOOR ===
+  if (floorImg) {
+    ctx.drawImage(floorImg, 0, 0);
+    if (L < 0.95) {
+      ctx.fillStyle = `rgba(0,0,0,${(1 - L) * 0.6})`;
+      ctx.fillRect(0, WALL_BOT, VW, VH - WALL_BOT);
+    }
+  }
+  // Floor shadow under wall
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.fillRect(0, WALL_BOT, VW, 5);
 
-  // Coffee station
-  px(6,200,40,5,tint('#c8b898',L));px(6,205,40,10,tint('#a89070',L));px(10,190,12,10,tint('#3a3a3a',L));px(11,191,10,6,tint('#2a2a2a',L));
-  px(20,192,1,1,'#40ff40');px(26,197,4,3,tint('#f0f0f0',L));px(32,197,4,3,tint('#e0d0c0',L));
+  // === DOOR (left side) ===
+  px(4, WALL_TOP + 16, 20, WALL_BOT - WALL_TOP - 16, tint('#7a5030', L));
+  px(5, WALL_TOP + 17, 18, WALL_BOT - WALL_TOP - 18, tint('#9a6840', L));
+  px(6, WALL_TOP + 18, 7, WALL_BOT - WALL_TOP - 20, tint('#a07040', L));
+  px(15, WALL_TOP + 18, 7, WALL_BOT - WALL_TOP - 20, tint('#a07040', L));
+  px(20, WALL_TOP + 48, 3, 4, tint('#d0a040', L)); // handle
+  // Door mat
+  px(4, WALL_BOT + 1, 22, 4, tint('#5a8050', L));
 
-  // Couch
-  px(200,210,50,12,tint('#5a3020',L));px(202,212,22,8,tint('#7a4030',L));px(226,212,22,8,tint('#7a4030',L));
-  px(198,207,4,16,tint('#4a2818',L));px(248,207,4,16,tint('#4a2818',L));px(200,200,50,8,tint('#5a3020',L));
-  px(210,226,30,7,tint('#6a5a40',L));px(216,227,6,3,tint('#f0f0f0',L));
+  // === DESKS ===
+  const deskPositions = [42, 130, 240, 370];
+  deskPositions.forEach((dx, di) => drawDesk(dx, WALL_BOT + 10, di));
 
-  // Bookshelf
-  const bkc=['#c04040','#3060c0','#40a040','#c0a020','#8040a0','#c06020','#4090a0','#a04060','#d07030','#4060d0','#a0a040','#d04080'];
-  px(440,195,18,28,tint('#6a5030',L));for(let r=0;r<3;r++)for(let b=0;b<4;b++)px(442+b*4,197+r*9,3,7,tint(bkc[(r*4+b)%bkc.length],L));
+  // === MEETING TABLE (right area) ===
+  const mtx = 418, mty = WALL_BOT + 8;
+  px(mtx, mty, 52, 24, tint('#806850', L));
+  px(mtx + 1, mty + 1, 50, 22, tint('#907860', L));
+  // Table legs
+  px(mtx + 2, mty + 24, 3, 8, tint('#6a5840', L));
+  px(mtx + 47, mty + 24, 3, 8, tint('#6a5840', L));
+  // Chairs around table
+  const chairColors = ['#4a4a6a', '#4a4a6a', '#4a4a6a'];
+  [mtx + 4, mtx + 22, mtx + 40].forEach((cx, i) => {
+    px(cx, mty - 4, 10, 5, tint(chairColors[i], L)); // top chairs
+    px(cx, mty + 25, 10, 5, tint(chairColors[i], L)); // bottom chairs
+  });
+  // Items on table
+  px(mtx + 10, mty + 5, 8, 5, tint('#e0e0e0', L)); // papers
+  px(mtx + 30, mty + 8, 5, 3, tint('#3a3a3a', L)); // laptop
 
-  // Plants
-  drawPlant(30,WALL_BOT+2,'big');drawPlant(115,WALL_BOT+4,'small');drawPlant(220,WALL_BOT+2,'big');
-  drawPlant(355,WALL_BOT+3,'small');drawPlant(410,WALL_BOT+3,'small');drawPlant(465,WALL_BOT+1,'big');
+  // === COFFEE STATION ===
+  const cfx = 6, cfy = 200;
+  px(cfx, cfy, 42, 6, tint('#d0c0a0', L)); // counter top
+  px(cfx, cfy + 6, 42, 14, tint('#a89070', L)); // counter body
+  px(cfx + 4, cfy - 12, 14, 12, tint('#3a3a3a', L)); // coffee machine
+  px(cfx + 5, cfy - 11, 12, 8, tint('#2a2a2a', L));
+  px(cfx + 8, cfy - 4, 1, 3, '#40ff40'); // power LED
+  px(cfx + 22, cfy - 4, 5, 4, tint('#f4f0e8', L)); // cup
+  px(cfx + 30, cfy - 4, 5, 4, tint('#e8d8c0', L)); // cup 2
+  px(cfx + 14, cfy - 2, 3, 2, tint('#604020', L)); // coffee drip
 
-  // Server rack
-  px(462,WALL_BOT+3,14,35,tint('#2a2a30',L));px(463,WALL_BOT+4,12,33,tint('#1a1a20',L));
-  for(let s=0;s<4;s++){px(464,WALL_BOT+6+s*8,10,6,tint('#252530',L));px(472,WALL_BOT+8+s*8,1,1,Math.sin(Date.now()/300+s*1.7)>.3?'#40ff40':'#0a200a');px(470,WALL_BOT+8+s*8,1,1,'#ff8800')}
+  // === COUCH ===
+  const cox = 195, coy = 210;
+  px(cox, coy + 2, 56, 14, tint('#5a3020', L)); // seat
+  px(cox + 2, coy + 4, 24, 10, tint('#7a4030', L)); // cushion 1
+  px(cox + 30, coy + 4, 24, 10, tint('#7a4030', L)); // cushion 2
+  px(cox - 3, coy - 2, 4, 20, tint('#4a2818', L)); // left arm
+  px(cox + 55, coy - 2, 4, 20, tint('#4a2818', L)); // right arm
+  px(cox, coy - 8, 56, 8, tint('#5a3020', L)); // backrest
+  // Coffee table in front
+  px(cox + 8, coy + 20, 40, 6, tint('#7a6a50', L));
+  px(cox + 10, coy + 26, 2, 6, tint('#6a5a40', L));
+  px(cox + 44, coy + 26, 2, 6, tint('#6a5a40', L));
+  // Items on coffee table
+  px(cox + 18, coy + 18, 8, 2, tint('#f4f0e8', L)); // papers
+  px(cox + 30, coy + 18, 5, 3, tint('#e0e0e0', L)); // mug
 
-  // Coat rack
-  px(28,WALL_BOT+8,1,18,tint('#5a4a30',L));px(25,WALL_BOT+6,7,2,tint('#5a4a30',L));px(26,WALL_BOT+4,2,2,tint('#3060c0',L));px(30,WALL_BOT+4,2,2,tint('#c03030',L));
+  // === BOOKSHELF ===
+  const bkx = 440, bky = 190;
+  px(bkx, bky, 22, 40, tint('#6a5030', L));
+  px(bkx + 1, bky + 1, 20, 38, tint('#5a4028', L));
+  const bookColors = ['#c04040', '#3060c0', '#40a040', '#c0a020', '#8040a0', '#c06020',
+    '#4090a0', '#a04060', '#d07030', '#4060d0', '#a0a040', '#d04080'];
+  for (let r = 0; r < 4; r++) {
+    px(bkx + 2, bky + 3 + r * 9, 18, 1, tint('#4a3020', L)); // shelf
+    for (let b = 0; b < 4; b++) {
+      const bh = 5 + ((r * 4 + b) % 3);
+      px(bkx + 3 + b * 4, bky + 3 + r * 9 - bh, 3, bh, tint(bookColors[(r * 4 + b) % bookColors.length], L));
+    }
+  }
+
+  // === PLANTS ===
+  drawPlant(28, WALL_BOT + 4, 'big');
+  drawPlant(118, WALL_BOT + 6, 'small');
+  drawPlant(222, WALL_BOT + 4, 'big');
+  drawPlant(358, WALL_BOT + 5, 'small');
+  drawPlant(412, WALL_BOT + 5, 'small');
+  drawPlant(466, WALL_BOT + 3, 'big');
+
+  // === SERVER RACK ===
+  const srx = 462, sry = WALL_BOT + 5;
+  px(srx, sry, 16, 38, tint('#2a2a30', L));
+  px(srx + 1, sry + 1, 14, 36, tint('#1a1a22', L));
+  for (let s = 0; s < 4; s++) {
+    px(srx + 2, sry + 3 + s * 9, 12, 7, tint('#222228', L));
+    px(srx + 3, sry + 4 + s * 9, 10, 5, tint('#28282e', L));
+    // Blinking LEDs
+    const led1 = Math.sin(Date.now() / 300 + s * 1.7) > 0.3;
+    const led2 = Math.sin(Date.now() / 500 + s * 2.3) > 0;
+    ctx.fillStyle = led1 ? '#40ff40' : '#0a200a';
+    ctx.fillRect(srx + 12, sry + 5 + s * 9, 1, 1);
+    ctx.fillStyle = led2 ? '#ff8800' : '#200a00';
+    ctx.fillRect(srx + 12, sry + 7 + s * 9, 1, 1);
+    ctx.fillStyle = '#2060ff';
+    ctx.fillRect(srx + 10, sry + 5 + s * 9, 1, 1);
+  }
+
+  // === COAT RACK ===
+  px(30, WALL_BOT + 6, 1, 20, tint('#5a4a30', L));
+  px(27, WALL_BOT + 4, 7, 2, tint('#5a4a30', L));
+  px(27, WALL_BOT + 2, 3, 3, tint('#3060c0', L)); // blue coat
+  px(32, WALL_BOT + 2, 3, 3, tint('#c03030', L)); // red scarf
+
+  // === RUG under couch area ===
+  ctx.fillStyle = `rgba(100,60,40,${0.08 * L})`;
+  ctx.fillRect(190, 205, 70, 40);
 }
 
-function drawDesk(x,y){
-  const L=daylight();
-  px(x,y,40,4,tint('#c4a878',L));px(x+2,y+4,2,14,tint('#a08858',L));px(x+36,y+4,2,14,tint('#a08858',L));
-  px(x+10,y-14,16,12,tint('#2a2a2a',L));px(x+11,y-13,14,10,tint('#1a2840',L));
-  px(x+12,y-12,6,1,`hsl(${(x*3)%360},50%,55%)`);px(x+12,y-10,10,1,tint('#4070a0',L));
-  px(x+12,y-8,8,1,tint('#406840',L));px(x+12,y-6,5,1,tint('#4070a0',L));
-  px(x+16,y-2,4,2,tint('#2a2a2a',L));px(x+14,y,8,1,tint('#333',L));
-  px(x+10,y+1,10,2,tint('#d0d0d0',L));px(x+24,y+1,3,3,tint('#c8c8c8',L));
-  px(x+12,y+18,16,8,tint('#3a3a58',L));px(x+14,y+14,12,4,tint('#4a4a68',L));
-  if(x%100<60){px(x+30,y+1,3,2,tint('#f0f0f0',L))}
-  if(x%100>30){px(x+3,y+1,5,3,tint('#f4f0e4',L))}
+function drawDesk(x, y, idx) {
+  const L = daylight();
+  // Desk surface
+  px(x, y, 44, 5, tint('#c4a878', L));
+  px(x + 1, y + 1, 42, 3, tint('#d4b888', L));
+  // Desk legs
+  px(x + 2, y + 5, 2, 16, tint('#a08858', L));
+  px(x + 40, y + 5, 2, 16, tint('#a08858', L));
+  // Monitor
+  px(x + 10, y - 16, 20, 14, tint('#2a2a2a', L));
+  px(x + 11, y - 15, 18, 12, tint('#1a2040', L));
+  // Screen content (unique per desk)
+  const screenColors = ['#4070a0', '#407040', '#a04070', '#a08040'];
+  px(x + 12, y - 14, 8, 1, `hsl(${idx * 90},50%,55%)`);
+  px(x + 12, y - 12, 14, 1, tint(screenColors[idx], L));
+  px(x + 12, y - 10, 10, 1, tint('#406840', L));
+  px(x + 12, y - 8, 7, 1, tint(screenColors[idx], L));
+  // Monitor stand
+  px(x + 18, y - 2, 4, 2, tint('#2a2a2a', L));
+  px(x + 16, y, 8, 1, tint('#333', L));
+  // Keyboard
+  px(x + 12, y + 1, 14, 3, tint('#d8d8d8', L));
+  px(x + 13, y + 2, 12, 1, tint('#c0c0c0', L));
+  // Mouse
+  px(x + 28, y + 2, 3, 3, tint('#d0d0d0', L));
+  // Desk items (vary per desk)
+  if (idx === 0) { px(x + 3, y + 1, 5, 3, tint('#f4f0e4', L)); } // papers
+  if (idx === 1) { px(x + 34, y + 1, 4, 3, tint('#4060c0', L)); } // book
+  if (idx === 2) { px(x + 35, y + 1, 3, 3, tint('#f0f0f0', L)); } // cup
+  if (idx === 3) { px(x + 3, y + 1, 3, 4, tint('#40a060', L)); } // plant
+  // Desk chair
+  px(x + 14, y + 16, 14, 5, tint('#4a4a68', L));
+  px(x + 16, y + 12, 10, 4, tint('#3a3a58', L));
 }
 
-function drawPlant(x,y,size){
-  const L=daylight(),sway=Math.sin(Date.now()/2000+x)*.5;
-  if(size==='big'){
-    px(x,y+14,8,5,tint('#a06030',L));px(x-1,y+19,10,2,tint('#805020',L));px(x+3,y+4,2,10,tint('#4a5a30',L));
-    const lc=tint('#3a8a3a',L),lc2=tint('#50a050',L);
-    px(x-2+sway,y-4,5,4,lc);px(x+3+sway,y-6,5,4,lc2);px(x-1+sway,y,7,4,lc);px(x+4+sway,y-1,4,4,lc2);px(x+sway,y+3,6,3,lc);
+function drawPlant(x, y, size) {
+  const L = daylight();
+  const sway = Math.sin(Date.now() / 3000 + x * 0.1) * 0.5;
+  if (size === 'big') {
+    // Pot
+    px(x, y + 14, 10, 6, tint('#b06830', L));
+    px(x - 1, y + 20, 12, 2, tint('#905020', L));
+    px(x + 1, y + 14, 8, 1, tint('#c07838', L));
+    // Stem
+    px(x + 4, y + 4, 2, 10, tint('#4a6030', L));
+    // Leaves
+    const lc = tint('#3a9a3a', L), lc2 = tint('#50b050', L), lc3 = tint('#2a8a2a', L);
+    px(x - 2 + sway, y - 4, 6, 4, lc);
+    px(x + 4 + sway, y - 6, 6, 4, lc2);
+    px(x - 1 + sway, y, 8, 4, lc);
+    px(x + 5 + sway, y - 1, 5, 4, lc3);
+    px(x + 1 + sway, y + 3, 7, 3, lc2);
   } else {
-    px(x,y+4,6,3,tint('#a06030',L));px(x+1,y,4,4,tint('#40a060',L));px(x+2,y-2,3,2,tint('#50b070',L));
+    px(x, y + 4, 8, 4, tint('#b06830', L));
+    px(x + 1, y, 6, 4, tint('#40b060', L));
+    px(x + 2, y - 2, 4, 2, tint('#50c070', L));
   }
 }
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 // AGENTS
-// ═══════════════════════════════════════════════
-const SHIRTS={purple:'#7f5af0',blue:'#3060c0',green:'#2cb67d',red:'#e53170',yellow:'#ff8906',orange:'#d06020',cyan:'#20a0b0',pink:'#c040a0'};
-class Agent{
-  constructor(n,sc,hc,role,spr){
-    this.name=n;this.shirt=sc;this.hair=hc||'#402010';this.skin='#e8b880';this.pants='#3a3a4a';
-    this.role=role||'Agent';this.spr=spr||null;
-    this.x=50+Math.random()*380;this.y=WALK_Y+Math.random()*16-8;
-    this.tx=this.x;this.ty=this.y;this.spd=.3+Math.random()*.15;this.dir=1;this.af=0;this.at=0;
-    this.state='idle';this.status='idle';this.task='';this.bubble='';this.bt=0;this.hasCoffee=false;
-    this.st=0;this.nb=3+Math.random()*8;this.log_=[];this._p=null;this.deskX=null;
+// ═══════════════════════════════════════════════════════
+const SHIRTS = {
+  purple: '#7c5cfc', blue: '#3060c0', green: '#2dd4a0', red: '#f0506e',
+  yellow: '#ff9f43', orange: '#d06020', cyan: '#20a0b0', pink: '#c040a0'
+};
+
+class Agent {
+  constructor(name, shirtColor, hairColor, role, sprite) {
+    this.name = name;
+    this.shirt = shirtColor;
+    this.hair = hairColor || '#402010';
+    this.skin = '#e8b880';
+    this.pants = '#3a3a4a';
+    this.role = role || 'Agent';
+    this.spr = sprite || null;
+    this.x = 60 + Math.random() * 360;
+    this.y = WALK_Y_MIN + Math.random() * 30;
+    this.tx = this.x;
+    this.ty = this.y;
+    this.spd = 0.3 + Math.random() * 0.15;
+    this.dir = 1;
+    this.animFrame = 0;
+    this.animTimer = 0;
+    this.state = 'idle'; // idle, walking, working, sitting
+    this.status = 'idle'; // idle, working, offline
+    this.task = '';
+    this.taskProgress = 0;
+    this.taskDuration = 0;
+    this.bubble = '';
+    this.bubbleTimer = 0;
+    this.hasCoffee = false;
+    this.idleTimer = 0;
+    this.nextIdle = 3 + Math.random() * 8;
+    this._pendingAction = null;
+    this.deskIdx = null;
+    this.log_ = [];
     this.log('Arrived at the office');
   }
-  log(m){const t=getTime();this.log_.unshift({time:`${String(t.h).padStart(2,'0')}:${String(t.m).padStart(2,'0')}`,msg:m});if(this.log_.length>30)this.log_.pop()}
-  say(t,d){this.bubble=t;this.bt=d||4}
-  assignTask(t){this.task=t;this.status='working';this.state='walking';const dxs=[55,140,250,380];this.deskX=dxs[Math.random()*dxs.length|0];this.tx=this.deskX+12;this.ty=WALK_Y-15+Math.random()*5;this.say('On it! 💻',3);this.log('Started: '+t);updDots()}
-  makeIdle(){this.status='idle';this.state='idle';this.task='';this.deskX=null;this.nb=2+Math.random()*5;this.st=0;this.log('Now idle');updDots()}
-  makeOff(){this.status='offline';this.state='idle';this.task='';this.log('Went offline');updDots()}
-  update(dt){
-    this.at+=dt;if(this.at>.18){this.af=(this.af+1)%4;this.at=0}
-    if(this.bt>0){this.bt-=dt;if(this.bt<=0)this.bubble=''}
-    this.st+=dt;if(this.status==='offline')return;
-    if(this.state==='walking'){const dx=this.tx-this.x,dy=this.ty-this.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist>1){this.dir=dx>0?1:-1;const s=this.spd*dt*60;this.x+=dx/dist*s;this.y+=dy/dist*s}else{this.x=this.tx;this.y=this.ty;this.onArr()}}
-    if(this.status==='idle'&&this.state!=='walking'){this.nb-=dt;if(this.nb<=0){this.pickIdle();this.nb=5+Math.random()*12}}
-    if(this.status==='working'&&this.state==='working'&&this.st>25+Math.random()*35){this.say('Done! ✅',3);this.log('Completed: '+this.task);showToast(this.name+' finished!');this.makeIdle()}
+
+  log(msg) {
+    const t = getTime();
+    this.log_.unshift({
+      time: `${String(t.h).padStart(2, '0')}:${String(t.m).padStart(2, '0')}`,
+      msg
+    });
+    if (this.log_.length > 50) this.log_.pop();
   }
-  onArr(){if(this.status==='working'){this.state='working';this.st=0;return}if(this._p==='coffee'){this.state='idle';this.say('☕',3);this.hasCoffee=true;setTimeout(()=>{this.hasCoffee=false},8000)}else if(this._p==='couch'){this.state='sitting';this.say('😌',2)}else{this.state='idle'}this._p=null}
-  pickIdle(){const b=['wander','wander','coffee','couch','wander','wander'][Math.random()*6|0];this._p=b;this.state='walking';if(b==='coffee'){this.tx=20;this.ty=WALK_Y+20}else if(b==='couch'){this.tx=210+Math.random()*30;this.ty=WALK_Y+30}else{this.tx=40+Math.random()*400;this.ty=WALK_Y+Math.random()*16-8}}
+
+  say(text, duration) {
+    this.bubble = text;
+    this.bubbleTimer = duration || 4;
+  }
+
+  assignTask(task) {
+    this.task = task;
+    this.status = 'working';
+    this.state = 'walking';
+    this.taskProgress = 0;
+    this.taskDuration = 20 + Math.random() * 40;
+    // Walk to a random desk
+    const deskPositions = [42, 130, 240, 370];
+    this.deskIdx = Math.random() * deskPositions.length | 0;
+    const dx = deskPositions[this.deskIdx];
+    this.tx = dx + 18;
+    this.ty = WALL_BOT + 28;
+    this.say('On it! 💻', 3);
+    this.log('Started: ' + task);
+    updAgentBar();
+  }
+
+  makeIdle() {
+    this.status = 'idle';
+    this.state = 'idle';
+    this.task = '';
+    this.taskProgress = 0;
+    this.deskIdx = null;
+    this.nextIdle = 2 + Math.random() * 5;
+    this.idleTimer = 0;
+    this.log('Now idle');
+    updAgentBar();
+  }
+
+  makeOffline() {
+    this.status = 'offline';
+    this.state = 'idle';
+    this.task = '';
+    this.log('Went offline');
+    updAgentBar();
+  }
+
+  update(dt) {
+    this.animTimer += dt;
+    if (this.animTimer > 0.18) {
+      this.animFrame = (this.animFrame + 1) % 4;
+      this.animTimer = 0;
+    }
+    if (this.bubbleTimer > 0) {
+      this.bubbleTimer -= dt;
+      if (this.bubbleTimer <= 0) this.bubble = '';
+    }
+    if (this.status === 'offline') return;
+
+    // Movement
+    if (this.state === 'walking') {
+      const dx = this.tx - this.x;
+      const dy = this.ty - this.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 1) {
+        this.dir = dx > 0 ? 1 : -1;
+        const s = this.spd * dt * 60;
+        this.x += dx / dist * s;
+        this.y += dy / dist * s;
+      } else {
+        this.x = this.tx;
+        this.y = this.ty;
+        this.onArrive();
+      }
+    }
+
+    // Idle behavior
+    if (this.status === 'idle' && this.state !== 'walking') {
+      this.idleTimer += dt;
+      if (this.idleTimer >= this.nextIdle) {
+        this.pickIdleAction();
+        this.idleTimer = 0;
+        this.nextIdle = 5 + Math.random() * 12;
+      }
+    }
+
+    // Working progress
+    if (this.status === 'working' && this.state === 'working') {
+      this.taskProgress += dt / this.taskDuration;
+      if (this.taskProgress >= 1) {
+        this.say('Done! ✅', 3);
+        this.log('Completed: ' + this.task);
+        showToast(`${this.name} finished: ${this.task}`);
+        this.makeIdle();
+      }
+    }
+  }
+
+  onArrive() {
+    if (this.status === 'working') {
+      this.state = 'working';
+      return;
+    }
+    if (this._pendingAction === 'coffee') {
+      this.state = 'idle';
+      this.say('☕ Ahh', 3);
+      this.hasCoffee = true;
+      this.log('Got coffee');
+      setTimeout(() => { this.hasCoffee = false; }, 8000);
+    } else if (this._pendingAction === 'couch') {
+      this.state = 'sitting';
+      this.say('😌', 2);
+      this.log('Taking a break');
+    } else {
+      this.state = 'idle';
+    }
+    this._pendingAction = null;
+  }
+
+  pickIdleAction() {
+    const actions = ['wander', 'wander', 'coffee', 'couch', 'wander', 'wander'];
+    const action = actions[Math.random() * actions.length | 0];
+    this._pendingAction = action;
+    this.state = 'walking';
+    if (action === 'coffee') {
+      this.tx = 20 + Math.random() * 20;
+      this.ty = WALK_Y_MIN + 60 + Math.random() * 10;
+    } else if (action === 'couch') {
+      this.tx = 205 + Math.random() * 30;
+      this.ty = WALK_Y_MIN + 55 + Math.random() * 10;
+    } else {
+      this.tx = 40 + Math.random() * 400;
+      this.ty = WALK_Y_MIN + Math.random() * (WALK_Y_MAX - WALK_Y_MIN - 30);
+    }
+  }
 }
 
-let agents=[
-  new Agent('Supreme Magus','#7f5af0','#2a1040','AI Wizard','mage'),
-  new Agent('Research Bot','#3060c0','#804020','Researcher'),
-  new Agent('Code Monkey','#2cb67d','#202020','Developer'),
-  new Agent('Data Cruncher','#e53170','#603010','Analyst'),
-  new Agent('Pixel Pete','#ff8906','#c0a040','Office Mgr'),
+let agents = [
+  new Agent('Supreme Magus', '#7c5cfc', '#2a1040', 'AI Wizard', 'mage'),
+  new Agent('Research Bot', '#3060c0', '#804020', 'Researcher'),
+  new Agent('Code Monkey', '#2dd4a0', '#202020', 'Developer'),
+  new Agent('Data Cruncher', '#f0506e', '#603010', 'Analyst'),
+  new Agent('Pixel Pete', '#ff9f43', '#c0a040', 'Office Mgr'),
 ];
-agents.forEach((a,i)=>{a.x=50+i*90;a.tx=a.x});
+agents.forEach((a, i) => { a.x = 60 + i * 85; a.tx = a.x; });
 agents[0].assignTask('Orchestrating agent workflows');
 agents[2].assignTask('Refactoring the main module');
 
-// ─── Draw agent sprite ───
-function drawAgent(a){
-  const x=Math.round(a.x),y=Math.round(a.y),L=daylight();
-  const isWalk=a.state==='walking',isSit=a.state==='working'||a.state==='sitting',isMage=a.spr==='mage';
-  const legOff=isWalk?Math.sin(a.af*Math.PI/2)*2:0;
-  if(a.status==='offline')ctx.globalAlpha=.35;
-  ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.ellipse(x+6,y+1,6,2,0,0,Math.PI*2);ctx.fill();
-  const by=isSit?y-10:y-18;
-  if(!isSit){px(x+2,by+14,3,4+legOff,tint(a.pants,L));px(x+7,by+14,3,4-legOff,tint(a.pants,L));px(x+1,by+18+legOff,4,2,tint('#2a2020',L));px(x+7,by+18-legOff,4,2,tint('#2a2020',L))}else{px(x+1,by+14,4,2,tint(a.pants,L));px(x+7,by+14,4,2,tint(a.pants,L))}
-  if(isMage){px(x+1,by+6,10,8,tint(a.shirt,L));px(x,by+10,12,4,tint(a.shirt,L));px(x+1,by+13,10,1,tint('#f0c040',L))}else{px(x+1,by+6,10,8,tint(a.shirt,L));px(x+4,by+6,4,1,tint('#ffffff',L*.5+.5))}
-  const armW=a.state==='working'?Math.sin(Date.now()/200):0;
-  px(a.dir>0?x+10:x-1,by+7,2,5+(armW|0),tint(a.shirt,L));px(a.dir>0?x-1:x+10,by+7,2,5,tint(a.shirt,L));
-  px(a.dir>0?x+10:x-1,by+12,2,1,tint(a.skin,L));px(a.dir>0?x-1:x+10,by+12,2,1,tint(a.skin,L));
-  px(x+1,by-1,10,7,tint(a.skin,L));
-  if(isMage){px(x,by-2,12,2,tint(a.shirt,L));px(x+1,by-4,10,2,tint(a.shirt,L));px(x+2,by-6,8,2,tint(a.shirt,L));px(x+3,by-8,6,2,tint(a.shirt,L));px(x+4,by-9,4,1,tint(a.shirt,L));px(x+5,by-10,2,1,'#f0c040')}else{px(x+1,by-2,10,2,tint(a.hair,L));px(a.dir>0?x+9:x+1,by,2,3,tint(a.hair,L))}
-  const ex=a.dir>0?3:2;px(x+ex+1,by+2,2,2,tint('#1a1a2a',L));px(x+ex+5,by+2,2,2,tint('#1a1a2a',L));
-  px(x+ex+2,by+2,1,1,'rgba(255,255,255,.5)');px(x+ex+6,by+2,1,1,'rgba(255,255,255,.5)');
-  px(x+5,by+5,3,1,tint('#c08060',L));
-  if(a.hasCoffee){const cx=a.dir>0?x+12:x-4;px(cx,by+10,3,3,'#f0f0f0');px(cx+1,by+9,1,1,'#806040')}
-  ctx.globalAlpha=1;
+// ═══════════════════════════════════════════════════════
+// DRAW AGENT
+// ═══════════════════════════════════════════════════════
+function drawAgent(a) {
+  const x = Math.round(a.x);
+  const y = Math.round(a.y);
+  const L = daylight();
+  const isWalk = a.state === 'walking';
+  const isSit = a.state === 'working' || a.state === 'sitting';
+  const isMage = a.spr === 'mage';
+  const legOff = isWalk ? Math.sin(a.animFrame * Math.PI / 2) * 2 : 0;
 
-  // Name tag on overlay
-  const T=TX;
-  ox.font=`${3*T}px 'Press Start 2P',monospace`;
-  const nm=ox.measureText(a.name),nw=nm.width/T;
-  const nx=x+6-nw/2,ny=by-10-(isMage?4:0);
-  ox.fillStyle='rgba(0,0,0,.65)';
-  ox.beginPath();ox.roundRect((nx-2)*T,(ny-2)*T,(nw+4)*T,6*T,2*T);ox.fill();
-  ox.fillStyle=a.status==='working'?'rgba(44,182,125,.8)':a.status==='offline'?'rgba(100,100,100,.5)':'rgba(255,255,255,.6)';
-  ox.fillText(a.name,nx*T,(ny+2)*T);
+  if (a.status === 'offline') ctx.globalAlpha = 0.3;
 
-  // Bubble
-  if(a.bubble)drawBubble(x+6,ny-5,a.bubble);
-  else if(a.state==='working'&&a.task){drawBubble(x+6,ny-5,a.task.length>20?a.task.substring(0,20)+'…':a.task)}
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.beginPath();
+  ctx.ellipse(x + 6, y + 1, 7, 2.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const by = isSit ? y - 8 : y - 18;
+
+  // === LEGS ===
+  if (!isSit) {
+    px(x + 2, by + 14, 3, 4 + legOff, tint(a.pants, L));
+    px(x + 7, by + 14, 3, 4 - legOff, tint(a.pants, L));
+    // Shoes
+    px(x + 1, by + 18 + legOff, 4, 2, tint('#2a2020', L));
+    px(x + 7, by + 18 - legOff, 4, 2, tint('#2a2020', L));
+  } else {
+    px(x + 1, by + 14, 4, 3, tint(a.pants, L));
+    px(x + 7, by + 14, 4, 3, tint(a.pants, L));
+  }
+
+  // === BODY ===
+  if (isMage) {
+    // Robe
+    px(x + 1, by + 6, 10, 8, tint(a.shirt, L));
+    px(x, by + 10, 12, 4, tint(a.shirt, L));
+    // Gold trim
+    px(x + 1, by + 13, 10, 1, tint('#f0c040', L));
+    // Robe detail
+    px(x + 5, by + 7, 2, 6, tint('#6040d0', L));
+  } else {
+    px(x + 1, by + 6, 10, 8, tint(a.shirt, L));
+    // Collar
+    px(x + 3, by + 6, 6, 2, tint('#ffffff', L * 0.4 + 0.6));
+  }
+
+  // === ARMS ===
+  const armBob = a.state === 'working' ? Math.sin(Date.now() / 200) * 1 : 0;
+  const frontArm = a.dir > 0 ? x + 10 : x - 1;
+  const backArm = a.dir > 0 ? x - 1 : x + 10;
+  px(backArm, by + 7, 2, 5, tint(a.shirt, L));
+  px(frontArm, by + 7, 2, 5 + (armBob | 0), tint(a.shirt, L));
+  // Hands
+  px(backArm, by + 12, 2, 1, tint(a.skin, L));
+  px(frontArm, by + 12 + (armBob | 0), 2, 1, tint(a.skin, L));
+
+  // === HEAD ===
+  px(x + 1, by - 1, 10, 7, tint(a.skin, L));
+
+  // === HAIR / HAT ===
+  if (isMage) {
+    // Wizard hat
+    px(x, by - 2, 12, 2, tint(a.shirt, L));
+    px(x + 1, by - 4, 10, 2, tint(a.shirt, L));
+    px(x + 2, by - 6, 8, 2, tint(a.shirt, L));
+    px(x + 3, by - 8, 6, 2, tint(a.shirt, L));
+    px(x + 4, by - 9, 4, 1, tint(a.shirt, L));
+    px(x + 5, by - 10, 2, 1, '#f0c040'); // star on tip
+    // Hat brim highlight
+    px(x, by - 2, 12, 1, tint('#9070ff', L));
+  } else {
+    px(x + 1, by - 2, 10, 2, tint(a.hair, L));
+    const sideHair = a.dir > 0 ? x + 9 : x + 1;
+    px(sideHair, by, 2, 3, tint(a.hair, L));
+  }
+
+  // === FACE ===
+  const faceOff = a.dir > 0 ? 3 : 2;
+  // Eyes
+  px(x + faceOff + 1, by + 2, 2, 2, tint('#1a1a2a', L));
+  px(x + faceOff + 5, by + 2, 2, 2, tint('#1a1a2a', L));
+  // Eye highlights
+  px(x + faceOff + 2, by + 2, 1, 1, 'rgba(255,255,255,0.5)');
+  px(x + faceOff + 6, by + 2, 1, 1, 'rgba(255,255,255,0.5)');
+  // Mouth
+  px(x + 5, by + 5, 3, 1, tint('#c08060', L));
+
+  // === HELD ITEMS ===
+  if (a.hasCoffee) {
+    const cupX = a.dir > 0 ? x + 12 : x - 4;
+    px(cupX, by + 10, 3, 4, '#f0f0f0');
+    px(cupX, by + 9, 3, 1, '#908070');
+    // Steam
+    if (Math.sin(Date.now() / 400) > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.fillRect(cupX + 1, by + 7, 1, 1);
+    }
+  }
+
+  // Mage staff (when not at desk)
+  if (isMage && a.state !== 'working') {
+    const staffX = a.dir > 0 ? x + 12 : x - 2;
+    px(staffX, by - 4, 1, 18, tint('#705020', L));
+    // Crystal on top
+    const glow = Math.sin(Date.now() / 500) * 0.3 + 0.7;
+    ctx.fillStyle = `rgba(160,100,255,${glow})`;
+    ctx.fillRect(staffX - 1, by - 6, 3, 3);
+    ctx.fillStyle = `rgba(200,160,255,${glow * 0.5})`;
+    ctx.fillRect(staffX, by - 7, 1, 1);
+  }
+
+  ctx.globalAlpha = 1;
+
+  // === NAMETAG (drawn on same canvas, pixel-perfect) ===
+  const tagY = by - (isMage ? 14 : 8);
+  drawNametag(x + 6, tagY, a);
+
+  // === SPEECH BUBBLE ===
+  if (a.bubble) {
+    drawBubble(x + 6, tagY - 8, a.bubble);
+  } else if (a.state === 'working' && a.task) {
+    const shortTask = a.task.length > 18 ? a.task.substring(0, 18) + '…' : a.task;
+    drawBubble(x + 6, tagY - 8, shortTask);
+  }
 }
 
-function drawBubble(x,y,text){
-  const T=TX;ox.font=`${2.5*T}px 'Press Start 2P',monospace`;
-  const m=ox.measureText(text),bw=m.width/T+6,bh=6,bx=x-bw/2,by=y-bh;
-  ox.fillStyle='rgba(0,0,0,.7)';ox.beginPath();ox.roundRect(bx*T,by*T,bw*T,bh*T,2*T);ox.fill();
-  ox.beginPath();ox.moveTo((x-1.5)*T,(by+bh)*T);ox.lineTo(x*T,(by+bh+1.5)*T);ox.lineTo((x+1.5)*T,(by+bh)*T);ox.fill();
-  ox.fillStyle='rgba(255,255,255,.85)';ox.fillText(text,(bx+3)*T,(by+4)*T);
+function drawNametag(cx, y, agent) {
+  ctx.save();
+  ctx.font = '4px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const metrics = ctx.measureText(agent.name);
+  const tw = metrics.width;
+  const pad = 3;
+  const bgW = tw + pad * 2;
+  const bgH = 7;
+  const bx = cx - bgW / 2;
+  const by = y - bgH / 2;
+
+  // Background
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.beginPath();
+  ctx.roundRect(bx, by, bgW, bgH, 2);
+  ctx.fill();
+
+  // Status dot
+  const dotColor = agent.status === 'working' ? '#2dd4a0' : agent.status === 'offline' ? '#555' : '#ff9f43';
+  ctx.fillStyle = dotColor;
+  ctx.fillRect(bx + 2, y - 1, 2, 2);
+
+  // Name text
+  ctx.fillStyle = agent.status === 'working' ? 'rgba(45,212,160,0.9)'
+    : agent.status === 'offline' ? 'rgba(100,100,100,0.5)'
+    : 'rgba(255,255,255,0.75)';
+  ctx.fillText(agent.name, cx + 2, y + 0.5);
+  ctx.restore();
 }
 
-// ─── Random events ───
-const randEv=[a=>{a[0].say('Coffee anyone? ☕',4)},a=>{const i=Math.random()*a.length|0;a[i].say(`Hey ${a[(i+1)%a.length].name}! 👋`,3)},a=>{const i=Math.random()*a.length|0;a[i].say('😂',3)},a=>{a[Math.random()*a.length|0].say('💡 Big idea!',3)},a=>{a[Math.random()*a.length|0].say('🎵',3)}];
-let nextEv=15+Math.random()*30;
+function drawBubble(cx, y, text) {
+  ctx.save();
+  ctx.font = '3px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const metrics = ctx.measureText(text);
+  const tw = metrics.width;
+  const pad = 3;
+  const bgW = tw + pad * 2;
+  const bgH = 6;
+  const bx = cx - bgW / 2;
+  const by = y - bgH / 2;
 
-// ─── Touch / interaction ───
-function canvasXY(cx,cy){const s=baseScale*camZ;return{x:(cx-camX)/s,y:(cy-camY)/s}}
-function hitAgent(mx,my){for(let i=agents.length-1;i>=0;i--){const a=agents[i],by=(a.state==='working'||a.state==='sitting')?a.y-10:a.y-18;if(mx>=a.x-6&&mx<=a.x+18&&my>=by-6&&my<=a.y+6)return a}return null}
+  // Bubble bg
+  ctx.fillStyle = 'rgba(20,20,30,0.85)';
+  ctx.beginPath();
+  ctx.roundRect(bx, by, bgW, bgH, 2);
+  ctx.fill();
 
-let dragStart=null,dragCamStart=null,isDragging=false,tapAgent=null;
-let pinchDist0=0,pinchZ0=1;
-cv.addEventListener('pointerdown',e=>{dragStart={x:e.clientX,y:e.clientY};dragCamStart={x:camX,y:camY};isDragging=false;tapAgent=hitAgent(...Object.values(canvasXY(e.clientX,e.clientY)))},{passive:true});
-cv.addEventListener('pointermove',e=>{if(!dragStart)return;const dx=e.clientX-dragStart.x,dy=e.clientY-dragStart.y;if(Math.abs(dx)>6||Math.abs(dy)>6)isDragging=true;if(isDragging){camX=dragCamStart.x+dx;camY=dragCamStart.y+dy;clampCam();applyTransform()}},{passive:true});
-cv.addEventListener('pointerup',()=>{if(!isDragging&&tapAgent)openAgent(tapAgent);else if(!isDragging)closeSheet();dragStart=null;tapAgent=null},{passive:true});
-cv.addEventListener('pointercancel',()=>{dragStart=null},{passive:true});
-cv.addEventListener('touchstart',e=>{if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;pinchDist0=Math.sqrt(dx*dx+dy*dy);pinchZ0=camZ}},{passive:true});
-cv.addEventListener('touchmove',e=>{if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;const d=Math.sqrt(dx*dx+dy*dy);if(pinchDist0>0){camZ=Math.max(.5,Math.min(3,pinchZ0*(d/pinchDist0)));clampCam();applyTransform()}}},{passive:true});
-cv.addEventListener('wheel',e=>{e.preventDefault();const oz=camZ;camZ=Math.max(.5,Math.min(3,camZ*(1-e.deltaY*.001)));camX=e.clientX-(e.clientX-camX)*(camZ/oz);camY=e.clientY-(e.clientY-camY)*(camZ/oz);clampCam();applyTransform()},{passive:false});
+  // Pointer
+  ctx.beginPath();
+  ctx.moveTo(cx - 2, by + bgH);
+  ctx.lineTo(cx, by + bgH + 2);
+  ctx.lineTo(cx + 2, by + bgH);
+  ctx.fill();
 
-// ─── UI: Agent dots ───
-function updDots(){
-  document.getElementById('agentDots').innerHTML=agents.map((a,i)=>
-    `<div class="adot ${a.status}" style="background:${a.shirt}" onclick="openAgent(agents[${i}])" title="${a.name}">${a.spr==='mage'?'🧙‍♂️':'👤'}</div>`
-  ).join('');
+  // Border
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.roundRect(bx, by, bgW, bgH, 2);
+  ctx.stroke();
+
+  // Text
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.fillText(text, cx, y + 0.5);
+  ctx.restore();
 }
-updDots();
 
-// ─── UI: Sheet ───
-const sheet=document.getElementById('sheet');let selAgent=null;
-function openAgent(a){selAgent=a;renderAgent();sheet.classList.add('open')}
-function closeSheet(){sheet.classList.remove('open');selAgent=null}
-let sheetTY=0;
-document.querySelector('.sheet-handle').addEventListener('touchstart',e=>{sheetTY=e.touches[0].clientY},{passive:true});
-document.querySelector('.sheet-handle').addEventListener('touchmove',e=>{if(e.touches[0].clientY-sheetTY>50)closeSheet()},{passive:true});
+// ═══════════════════════════════════════════════════════
+// RANDOM EVENTS
+// ═══════════════════════════════════════════════════════
+const randomEvents = [
+  a => { a[0].say('☕ Coffee anyone?', 4); },
+  a => { const i = Math.random() * a.length | 0; a[i].say(`Hey ${a[(i + 1) % a.length].name}! 👋`, 3); },
+  a => { a[Math.random() * a.length | 0].say('😂', 3); },
+  a => { a[Math.random() * a.length | 0].say('💡 Idea!', 3); },
+  a => { a[Math.random() * a.length | 0].say('🎵', 3); },
+  a => { a[Math.random() * a.length | 0].say('🤔 Hmm...', 3); },
+  a => { const i = Math.random() * a.length | 0; a[i].say('BRB ☕', 2); a[i]._pendingAction = 'coffee'; a[i].state = 'walking'; a[i].tx = 20; a[i].ty = WALK_Y_MIN + 65; },
+];
+let nextEvent = 15 + Math.random() * 30;
 
-function renderAgent(){
-  if(!selAgent)return;const a=selAgent;
-  document.getElementById('sheetBody').innerHTML=`
-    <div class="ag-header"><div class="ag-avatar" style="background:${a.spr==='mage'?'linear-gradient(135deg,#7f5af0,#5a3ad0)':a.shirt}">${a.spr==='mage'?'🧙‍♂️':'👤'}</div><div><div class="ag-name">${a.name}</div><div class="ag-role">${a.role}</div></div></div>
-    <div class="ag-status ${a.status}">${a.status}</div>
-    ${a.task?`<div class="ag-task">📋 ${a.task}</div>`:''}
-    <div class="ag-actions">
-      <button class="abtn green" onclick="document.getElementById('tin').focus()">📝 Task</button>
-      <button class="abtn" onclick="if(selAgent){selAgent.makeIdle();renderAgent()}">☕ Break</button>
-      <button class="abtn accent" onclick="document.getElementById('min').focus()">💬 Say</button>
-      <button class="abtn danger" onclick="if(selAgent){selAgent.status==='offline'?(selAgent.status='idle',selAgent.state='idle',selAgent.log('Back online')):(selAgent.makeOff());renderAgent();updDots()}">${a.status==='offline'?'🟢 Online':'🔴 Offline'}</button>
+// ═══════════════════════════════════════════════════════
+// INTERACTION
+// ═══════════════════════════════════════════════════════
+function canvasXY(clientX, clientY) {
+  const s = baseScale * camZ;
+  return { x: (clientX - camX) / s, y: (clientY - camY) / s };
+}
+
+function hitAgent(mx, my) {
+  for (let i = agents.length - 1; i >= 0; i--) {
+    const a = agents[i];
+    const by = (a.state === 'working' || a.state === 'sitting') ? a.y - 8 : a.y - 18;
+    if (mx >= a.x - 6 && mx <= a.x + 18 && my >= by - 6 && my <= a.y + 6) return a;
+  }
+  return null;
+}
+
+let dragStart = null, dragCamStart = null, isDragging = false, tapAgent = null;
+let pinchDist0 = 0, pinchZ0 = 1;
+
+cv.addEventListener('pointerdown', e => {
+  dragStart = { x: e.clientX, y: e.clientY };
+  dragCamStart = { x: camX, y: camY };
+  isDragging = false;
+  tapAgent = hitAgent(...Object.values(canvasXY(e.clientX, e.clientY)));
+}, { passive: true });
+
+cv.addEventListener('pointermove', e => {
+  if (!dragStart) return;
+  const dx = e.clientX - dragStart.x;
+  const dy = e.clientY - dragStart.y;
+  if (Math.abs(dx) > 6 || Math.abs(dy) > 6) isDragging = true;
+  if (isDragging) {
+    camX = dragCamStart.x + dx;
+    camY = dragCamStart.y + dy;
+    clampCam(); applyTransform();
+  }
+}, { passive: true });
+
+cv.addEventListener('pointerup', () => {
+  if (!isDragging && tapAgent) openAgentPanel(tapAgent);
+  else if (!isDragging) closePanel();
+  dragStart = null; tapAgent = null;
+}, { passive: true });
+
+cv.addEventListener('pointercancel', () => { dragStart = null; }, { passive: true });
+
+cv.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    pinchDist0 = Math.sqrt(dx * dx + dy * dy);
+    pinchZ0 = camZ;
+  }
+}, { passive: true });
+
+cv.addEventListener('touchmove', e => {
+  if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (pinchDist0 > 0) {
+      camZ = Math.max(0.5, Math.min(3, pinchZ0 * (d / pinchDist0)));
+      clampCam(); applyTransform();
+    }
+  }
+}, { passive: true });
+
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  const oz = camZ;
+  camZ = Math.max(0.5, Math.min(3, camZ * (1 - e.deltaY * 0.001)));
+  camX = e.clientX - (e.clientX - camX) * (camZ / oz);
+  camY = e.clientY - (e.clientY - camY) * (camZ / oz);
+  clampCam(); applyTransform();
+}, { passive: false });
+
+// ═══════════════════════════════════════════════════════
+// UI: AGENT BAR
+// ═══════════════════════════════════════════════════════
+function updAgentBar() {
+  document.getElementById('agentBar').innerHTML = agents.map((a, i) => {
+    const emoji = a.spr === 'mage' ? '🧙‍♂️' : '👤';
+    const sel = selAgent === a ? ' sel' : '';
+    return `<div class="agent-chip${sel}" onclick="openAgentPanel(agents[${i}])">
+      <div class="chip-avatar" style="background:${a.shirt}">${emoji}</div>
+      <div class="chip-info">
+        <div class="chip-name">${a.name}</div>
+        <div class="chip-status ${a.status}">${a.status}</div>
+      </div>
+      <div class="chip-dot ${a.status}"></div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// UI: PANEL
+// ═══════════════════════════════════════════════════════
+const panel = document.getElementById('panel');
+let selAgent = null;
+let menuOpen = false;
+
+function openAgentPanel(a) {
+  selAgent = a;
+  menuOpen = false;
+  renderPanel();
+  panel.classList.add('open');
+  updAgentBar();
+}
+
+function closePanel() {
+  panel.classList.remove('open');
+  selAgent = null;
+  menuOpen = false;
+  updAgentBar();
+}
+
+function renderPanel() {
+  if (!selAgent) return;
+  const a = selAgent;
+  const emoji = a.spr === 'mage' ? '🧙‍♂️' : '👤';
+  const progressPct = a.status === 'working' ? Math.min(100, a.taskProgress * 100) : 0;
+
+  document.getElementById('panelBody').innerHTML = `
+    <div class="p-header">
+      <div class="p-avatar" style="background:${a.spr === 'mage' ? 'linear-gradient(135deg,#7c5cfc,#5a3ad0)' : a.shirt}">${emoji}</div>
+      <div>
+        <div class="p-name">${a.name}</div>
+        <div class="p-role">${a.role}</div>
+      </div>
+      <div class="p-close" onclick="closePanel()">✕</div>
     </div>
-    <div class="ag-label">Assign Task</div>
-    <input class="ag-input" id="tin" type="text" placeholder="What should they work on?" value="${a.task||''}"/>
-    <button class="abtn green full" onclick="const v=document.getElementById('tin')?.value.trim();if(v&&selAgent){selAgent.assignTask(v);renderAgent()}">▶ Start</button>
-    <div style="height:8px"></div>
-    <div class="ag-label">Send Message</div>
-    <input class="ag-input" id="min" type="text" placeholder="Say something..."/>
-    <button class="abtn full" onclick="const v=document.getElementById('min')?.value.trim();if(v&&selAgent){selAgent.say(v,5);selAgent.log('Said: '+v);document.getElementById('min').value='';renderAgent()}">💬 Send</button>
-    <div class="ag-log"><h4>Activity Log</h4><div class="ag-log-list">${a.log_.map(l=>`<div class="ag-log-item"><span class="time">${l.time}</span> ${l.msg}</div>`).join('')}</div></div>`;
+
+    <div class="p-badge ${a.status}">${a.status}</div>
+
+    ${a.task ? `
+    <div class="p-task-card">
+      <span class="task-icon">📋</span>
+      <div style="flex:1">
+        <div>${a.task}</div>
+        <div class="task-progress"><div class="task-progress-bar" style="width:${progressPct}%"></div></div>
+      </div>
+    </div>` : ''}
+
+    <div class="p-section">
+      <div class="p-label">Assign Task</div>
+      <div class="p-input-row">
+        <input class="p-input" id="taskInput" type="text" placeholder="What should they work on?"
+          onkeydown="if(event.key==='Enter'){doAssignTask()}" />
+        <button class="p-btn green" onclick="doAssignTask()">▶</button>
+      </div>
+    </div>
+
+    <div class="p-section">
+      <div class="p-label">Send Message</div>
+      <div class="p-input-row">
+        <input class="p-input" id="msgInput" type="text" placeholder="Say something..."
+          onkeydown="if(event.key==='Enter'){doSendMsg()}" />
+        <button class="p-btn accent" onclick="doSendMsg()">💬</button>
+      </div>
+    </div>
+
+    <div class="p-actions">
+      <button class="p-btn" onclick="if(selAgent){selAgent.makeIdle();renderPanel();updAgentBar()}">☕ Break</button>
+      <button class="p-btn ${a.status === 'offline' ? 'green' : 'red'}" onclick="toggleOnline()">
+        ${a.status === 'offline' ? '🟢 Online' : '🔴 Offline'}
+      </button>
+    </div>
+
+    <div class="p-section p-log">
+      <div class="p-label">Activity Log</div>
+      ${a.log_.slice(0, 15).map(l =>
+    `<div class="p-log-item"><span class="log-time">${l.time}</span><span>${l.msg}</span></div>`
+  ).join('')}
+    </div>`;
 }
 
-// ─── Menu ───
-let menuOpen=false;
-function toggleMenu(){
-  if(menuOpen){closeSheet();menuOpen=false;return}
-  menuOpen=true;selAgent=null;
-  document.getElementById('sheetBody').innerHTML=`
-    <div class="menu-title">Menu</div>
-    <div class="menu-item" onclick="showAgentList()"><span class="mi-icon">👥</span><span class="mi-text">All Agents</span></div>
-    <div class="menu-item" onclick="showAddModal()"><span class="mi-icon">➕</span><span class="mi-text">Add Agent</span></div>
-    <div class="menu-item" onclick="bcast()"><span class="mi-icon">📢</span><span class="mi-text">Broadcast Message</span></div>`;
-  sheet.classList.add('open');
+function doAssignTask() {
+  const input = document.getElementById('taskInput');
+  if (!input || !selAgent) return;
+  const val = input.value.trim();
+  if (!val) { showToast('Enter a task first'); return; }
+  selAgent.assignTask(val);
+  showToast(`📋 Task assigned to ${selAgent.name}`);
+  renderPanel();
 }
-function showAgentList(){
-  menuOpen=false;
-  document.getElementById('sheetBody').innerHTML=`<div class="menu-title">👥 Agents</div>`+
-    agents.map((a,i)=>`<div class="menu-item" onclick="openAgent(agents[${i}])"><span class="mi-icon" style="font-size:14px">${a.spr==='mage'?'🧙‍♂️':'👤'}</span><span class="mi-text" style="flex:1">${a.name} <span style="color:rgba(255,255,255,.25);font-size:11px">· ${a.role}</span></span><div class="ag-status ${a.status}" style="margin:0;font-size:9px">${a.status}</div></div>`).join('');
+
+function doSendMsg() {
+  const input = document.getElementById('msgInput');
+  if (!input || !selAgent) return;
+  const val = input.value.trim();
+  if (!val) return;
+  selAgent.say(val, 5);
+  selAgent.log('Said: ' + val);
+  input.value = '';
+  renderPanel();
 }
-function showAddModal(){
-  closeSheet();menuOpen=false;
-  const colors=Object.entries(SHIRTS);
-  const m=document.createElement('div');m.className='modal-bg';m.onclick=e=>{if(e.target===m)m.remove()};
-  m.innerHTML=`<div class="modal-card"><h2>➕ New Agent</h2>
-    <div class="ag-label">Name</div><input class="ag-input" id="nName" placeholder="Agent name..."/>
-    <div class="ag-label">Role</div><input class="ag-input" id="nRole" placeholder="Role..."/>
-    <div class="ag-label">Color</div><div class="color-row">${colors.map(([n,c])=>`<div class="csw${n==='purple'?' sel':''}" data-color="${c}" style="background:${c}" onclick="document.querySelectorAll('.csw').forEach(s=>s.classList.remove('sel'));this.classList.add('sel')"></div>`).join('')}</div>
-    <div class="btn-row"><button class="abtn" onclick="this.closest('.modal-bg').remove()">Cancel</button><button class="abtn green" onclick="doAdd()">Add</button></div></div>`;
+
+function toggleOnline() {
+  if (!selAgent) return;
+  if (selAgent.status === 'offline') {
+    selAgent.status = 'idle';
+    selAgent.state = 'idle';
+    selAgent.log('Back online');
+  } else {
+    selAgent.makeOffline();
+  }
+  renderPanel();
+  updAgentBar();
+}
+
+// ═══════════════════════════════════════════════════════
+// UI: MENU
+// ═══════════════════════════════════════════════════════
+function toggleMenu() {
+  if (menuOpen || selAgent) {
+    closePanel();
+    return;
+  }
+  menuOpen = true;
+  selAgent = null;
+  document.getElementById('panelBody').innerHTML = `
+    <div class="p-header">
+      <div style="font-size:16px">⚙️</div>
+      <div><div class="p-name">Menu</div><div class="p-role">AI Office Controls</div></div>
+      <div class="p-close" onclick="closePanel()">✕</div>
+    </div>
+    <div class="menu-item" onclick="showAllAgents()"><span class="m-icon">👥</span><span class="m-text">All Agents</span></div>
+    <div class="menu-item" onclick="showAddModal()"><span class="m-icon">➕</span><span class="m-text">Add Agent</span></div>
+    <div class="menu-item" onclick="showBroadcastModal()"><span class="m-icon">📢</span><span class="m-text">Broadcast Message</span></div>
+    <div class="menu-item" onclick="assignAllBreak()"><span class="m-icon">☕</span><span class="m-text">Everyone — Break</span></div>`;
+  panel.classList.add('open');
+}
+
+function showAllAgents() {
+  menuOpen = false;
+  document.getElementById('panelBody').innerHTML = `
+    <div class="p-header">
+      <div style="font-size:16px">👥</div>
+      <div><div class="p-name">All Agents</div><div class="p-role">${agents.length} total</div></div>
+      <div class="p-close" onclick="closePanel()">✕</div>
+    </div>
+    ${agents.map((a, i) => {
+    const emoji = a.spr === 'mage' ? '🧙‍♂️' : '👤';
+    return `<div class="menu-item" onclick="openAgentPanel(agents[${i}])">
+        <div class="chip-avatar" style="background:${a.shirt};width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">${emoji}</div>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500">${a.name}</div><div style="font-size:10px;color:var(--text3)">${a.role}</div></div>
+        <div class="p-badge ${a.status}" style="margin:0;font-size:8px">${a.status}</div>
+      </div>`;
+  }).join('')}`;
+}
+
+function showAddModal() {
+  closePanel();
+  const colors = Object.entries(SHIRTS);
+  const m = document.createElement('div');
+  m.className = 'modal-bg';
+  m.onclick = e => { if (e.target === m) m.remove(); };
+  m.innerHTML = `<div class="modal-card">
+    <h2>➕ New Agent</h2>
+    <div class="p-section"><div class="p-label">Name</div><input class="p-input" id="nName" placeholder="Agent name..." /></div>
+    <div class="p-section"><div class="p-label">Role</div><input class="p-input" id="nRole" placeholder="Role..." /></div>
+    <div class="p-section"><div class="p-label">Color</div>
+      <div class="color-row">${colors.map(([n, c]) =>
+    `<div class="csw${n === 'purple' ? ' sel' : ''}" data-color="${c}" style="background:${c}"
+          onclick="document.querySelectorAll('.csw').forEach(s=>s.classList.remove('sel'));this.classList.add('sel')"></div>`
+  ).join('')}</div>
+    </div>
+    <div class="btn-row">
+      <button class="p-btn" onclick="this.closest('.modal-bg').remove()">Cancel</button>
+      <button class="p-btn green" onclick="doAddAgent()">Add Agent</button>
+    </div>
+  </div>`;
   document.body.appendChild(m);
 }
-function doAdd(){
-  const n=document.getElementById('nName')?.value.trim(),r=document.getElementById('nRole')?.value.trim();
-  const s=document.querySelector('.csw.sel');if(!n){showToast('Enter a name');return}
-  agents.push(new Agent(n,s?s.dataset.color:'#888',['#402010','#804020','#202020','#c0a040'][Math.random()*4|0],r||'Agent'));
-  document.querySelector('.modal-bg')?.remove();showToast('✅ '+n+' joined!');updDots();
+
+function doAddAgent() {
+  const n = document.getElementById('nName')?.value.trim();
+  const r = document.getElementById('nRole')?.value.trim();
+  const s = document.querySelector('.csw.sel');
+  if (!n) { showToast('Enter a name'); return; }
+  const hairColors = ['#402010', '#804020', '#202020', '#c0a040', '#603010'];
+  agents.push(new Agent(n, s ? s.dataset.color : '#888', hairColors[Math.random() * hairColors.length | 0], r || 'Agent'));
+  document.querySelector('.modal-bg')?.remove();
+  showToast('✅ ' + n + ' joined the office!');
+  updAgentBar();
 }
-function bcast(){
-  closeSheet();menuOpen=false;
-  const m=document.createElement('div');m.className='modal-bg';m.onclick=e=>{if(e.target===m)m.remove()};
-  m.innerHTML=`<div class="modal-card"><h2>📢 Broadcast</h2>
-    <div class="ag-label">Message</div><input class="ag-input" id="bMsg" placeholder="Hey everyone..."/>
-    <div class="btn-row"><button class="abtn" onclick="this.closest('.modal-bg').remove()">Cancel</button><button class="abtn green" onclick="const v=document.getElementById('bMsg')?.value.trim();if(v){agents.forEach(a=>{if(a.status!=='offline')setTimeout(()=>{a.say(v,4);a.log('Broadcast: '+v)},Math.random()*1000)});this.closest('.modal-bg').remove();showToast('📢 Sent!')}">Send</button></div></div>`;
+
+function showBroadcastModal() {
+  closePanel();
+  const m = document.createElement('div');
+  m.className = 'modal-bg';
+  m.onclick = e => { if (e.target === m) m.remove(); };
+  m.innerHTML = `<div class="modal-card">
+    <h2>📢 Broadcast Message</h2>
+    <div class="p-section"><div class="p-label">Message to everyone</div>
+      <input class="p-input" id="bMsg" placeholder="Hey everyone..."
+        onkeydown="if(event.key==='Enter'){doBroadcast()}" />
+    </div>
+    <div class="btn-row">
+      <button class="p-btn" onclick="this.closest('.modal-bg').remove()">Cancel</button>
+      <button class="p-btn green" onclick="doBroadcast()">📢 Send</button>
+    </div>
+  </div>`;
   document.body.appendChild(m);
 }
 
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();menuOpen=false;document.querySelector('.modal-bg')?.remove()}if(e.key==='Enter'){if(document.activeElement?.id==='tin'){const v=document.getElementById('tin')?.value.trim();if(v&&selAgent){selAgent.assignTask(v);renderAgent()}}if(document.activeElement?.id==='min'){const v=document.getElementById('min')?.value.trim();if(v&&selAgent){selAgent.say(v,5);selAgent.log('Said: '+v);document.getElementById('min').value='';renderAgent()}}}});
+function doBroadcast() {
+  const v = document.getElementById('bMsg')?.value.trim();
+  if (!v) { showToast('Enter a message'); return; }
+  agents.forEach(a => {
+    if (a.status !== 'offline') {
+      setTimeout(() => {
+        a.say(v, 4);
+        a.log('📢 ' + v);
+      }, Math.random() * 800);
+    }
+  });
+  document.querySelector('.modal-bg')?.remove();
+  showToast('📢 Broadcast sent!');
+}
 
-function showToast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
+function assignAllBreak() {
+  closePanel();
+  agents.forEach(a => {
+    if (a.status !== 'offline') {
+      a.makeIdle();
+      a._pendingAction = 'coffee';
+      a.state = 'walking';
+      a.tx = 10 + Math.random() * 30;
+      a.ty = WALK_Y_MIN + 60 + Math.random() * 15;
+    }
+  });
+  showToast('☕ Everyone is on break!');
+  updAgentBar();
+}
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+// ═══════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closePanel();
+    document.querySelector('.modal-bg')?.remove();
+  }
+});
+
+// ═══════════════════════════════════════════════════════
 // GAME LOOP
-// ═══════════════════════════════════════════════
-let lt=0;
-function loop(ts){
-  const dt=Math.min((ts-lt)/1000,.1);lt=ts;
-  const t=getTime();
-  document.getElementById('clock').textContent=`${String(t.h).padStart(2,'0')}:${String(t.m).padStart(2,'0')}`;
-  nextEv-=dt;if(nextEv<=0){const ac=agents.filter(a=>a.status!=='offline');if(ac.length)randEv[Math.random()*randEv.length|0](ac);nextEv=20+Math.random()*40}
-  agents.forEach(a=>a.update(dt));
-  ctx.clearRect(0,0,VW,VH);ox.clearRect(0,0,VW*TX,VH*TX);
+// ═══════════════════════════════════════════════════════
+let lastTime = 0;
+let panelRefreshTimer = 0;
+
+function loop(ts) {
+  const dt = Math.min((ts - lastTime) / 1000, 0.1);
+  lastTime = ts;
+
+  // Update clock
+  const t = getTime();
+  document.getElementById('clock').textContent =
+    `${String(t.h).padStart(2, '0')}:${String(t.m).padStart(2, '0')}`;
+
+  // Random events
+  nextEvent -= dt;
+  if (nextEvent <= 0) {
+    const activeAgents = agents.filter(a => a.status !== 'offline');
+    if (activeAgents.length) {
+      randomEvents[Math.random() * randomEvents.length | 0](activeAgents);
+    }
+    nextEvent = 20 + Math.random() * 40;
+  }
+
+  // Update agents
+  agents.forEach(a => a.update(dt));
+
+  // Draw
+  ctx.clearRect(0, 0, VW, VH);
   drawOffice();
-  [...agents].sort((a,b)=>a.y-b.y).forEach(a=>drawAgent(a));
+
+  // Sort agents by Y for proper layering
+  const sorted = [...agents].sort((a, b) => a.y - b.y);
+  sorted.forEach(a => drawAgent(a));
+
+  // Refresh panel periodically (for progress bar)
+  panelRefreshTimer += dt;
+  if (panelRefreshTimer > 1 && selAgent && !menuOpen) {
+    panelRefreshTimer = 0;
+    // Only update progress bar and status without re-rendering whole panel
+    const progBar = document.querySelector('.task-progress-bar');
+    if (progBar && selAgent.status === 'working') {
+      progBar.style.width = `${Math.min(100, selAgent.taskProgress * 100)}%`;
+    }
+    const badge = document.querySelector('.p-badge');
+    if (badge) {
+      badge.className = `p-badge ${selAgent.status}`;
+      badge.textContent = selAgent.status;
+    }
+  }
+
   requestAnimationFrame(loop);
 }
 
-initFloor();resize();
-window.addEventListener('load',()=>{setTimeout(()=>{document.getElementById('loading').classList.add('hide');setTimeout(()=>document.getElementById('loading').remove(),500)},600)});
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+initFloor();
+resize();
+updAgentBar();
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const loading = document.getElementById('loading');
+    loading.classList.add('hide');
+    setTimeout(() => loading.remove(), 500);
+  }, 800);
+});
+
 requestAnimationFrame(loop);
 </script>
 </body>
